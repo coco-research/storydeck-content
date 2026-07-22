@@ -1,0 +1,2625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>StoryDeck</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,700;1,400&family=VT323&display=swap" rel="stylesheet">
+<style>
+  /* ── Retro terminal theme (gruvbox default) ──────────────────────────────
+     Mapped onto the app's existing token names so all rules stay valid.
+     data-theme="amber" / "green" swap the palette; gruvbox is the default. */
+  :root {
+    --bg: #17191a;
+    --panel: #1d2021;
+    --panel-soft: #1b1d1e;
+    --panel-warm: #1d2021;
+    --surface-strong: #32302f;
+    --text: #ebdbb2;
+    --text-2: #d5c4a1;
+    --muted: #a89984;
+    --faint-text: #928374;
+    --faint: #504945;
+    --line: #5b5450;
+    --border: #504945;
+    --accent: #fe8019;
+    --accent-dark: #d65d0e;
+    --accent-2: #d3869b;
+    --info: #83a598;
+    --accent-wash: rgba(254, 128, 25, 0.12);
+    --accent-wash-strong: rgba(254, 128, 25, 0.42);
+    --clay: #fabd2f;
+    --danger: #fb4934;
+    --success: #b8bb26;
+    --warning: #fabd2f;
+    --radius-lg: 6px;
+    --radius-md: 4px;
+    --shadow: 0 10px 28px -14px rgba(0, 0, 0, 0.7);
+    --ring: 0 0 0 2px rgba(254, 128, 25, 0.5);
+    --font-serif: "VT323", "JetBrains Mono", ui-monospace, monospace;
+    --font-sans: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  html[data-theme="amber"] {
+    --bg: #0a0a0a; --panel: #14100b; --panel-soft: #100c07; --panel-warm: #14100b;
+    --surface-strong: #1d160c; --text: #ffb000; --text-2: #e8a52a; --muted: #c98a12;
+    --faint-text: #9a6e1a; --faint: #3d2f13; --line: #4d3c18; --border: #3d2f13;
+    --accent: #ff8c42; --accent-dark: #e0731f; --accent-2: #ffd27f; --info: #ffb000; --accent-wash: rgba(255,140,66,0.14);
+    --accent-wash-strong: rgba(255,140,66,0.42); --clay: #ffd27f; --danger: #ff6b4a;
+    --success: #e8c36b; --warning: #ffd27f; --ring: 0 0 0 2px rgba(255,140,66,0.5);
+  }
+  html[data-theme="green"] {
+    --bg: #0a0f0a; --panel: #0f160f; --panel-soft: #0c120c; --panel-warm: #0f160f;
+    --surface-strong: #16241a; --text: #33ff66; --text-2: #6ce08a; --muted: #4ea96a;
+    --faint-text: #2e7d48; --faint: #1f3a28; --line: #275235; --border: #1f3a28;
+    --accent: #79ff4d; --accent-dark: #57e02c; --accent-2: #b6ffc9; --info: #33ff66; --accent-wash: rgba(121,255,77,0.12);
+    --accent-wash-strong: rgba(121,255,77,0.4); --clay: #c6ff6b; --danger: #ff6b6b;
+    --success: #7cffa0; --warning: #c6ff6b; --ring: 0 0 0 2px rgba(121,255,77,0.5);
+  }
+  /* Light: gruvbox-light paper. Same retro terminal design, inverted for daylight.
+     Cards/body sit on the light "hard" cream; columns are a touch darker so the
+     card-inset relationship from the dark themes is preserved. */
+  html[data-theme="light"] {
+    --bg: #f9f5d7; --panel: #ece3bd; --panel-soft: #f2ead0; --panel-warm: #ece3bd;
+    --surface-strong: #d5c4a1; --text: #282828; --text-2: #3c3836; --muted: #5f5750;
+    --faint-text: #7c6f64; --faint: #d5c4a1; --line: #bdae93; --border: #d5c4a1;
+    --accent: #af3a03; --accent-dark: #d65d0e; --accent-2: #8f3f71; --info: #076678;
+    --accent-wash: rgba(175,58,3,0.10); --accent-wash-strong: rgba(175,58,3,0.28);
+    --clay: #b57614; --danger: #9d0006; --success: #6f7410; --warning: #b57614;
+    --ok: #6f7410;
+    --shadow: 0 10px 26px -16px rgba(60,56,54,0.45);
+    --ring: 0 0 0 2px rgba(175,58,3,0.45);
+  }
+  /* Light-theme semantic washes: retune the hardcoded dark-palette tints so
+     badges/status chips read cleanly on cream (text still uses the tokens). */
+  html[data-theme="light"] .badge-red { background: rgba(157,0,6,0.10); }
+  html[data-theme="light"] .badge-yellow { background: rgba(181,118,20,0.14); }
+  html[data-theme="light"] .badge-green { background: rgba(111,116,16,0.14); }
+  html[data-theme="light"] .status-label.done-label { background: rgba(111,116,16,0.14); }
+  html[data-theme="light"] .action-btn.done-btn:hover { background: rgba(111,116,16,0.14); }
+  html[data-theme="light"] .action-btn.progress-btn:hover { background: rgba(181,118,20,0.14); }
+  html[data-theme="light"] .action-btn.blocked-btn:hover,
+  html[data-theme="light"] .action-btn.delete-btn:hover { background: rgba(157,0,6,0.10); }
+
+  /* McKinsey: white paper, Deep Blue (#051C2C) type, electric McKinsey blue
+     (#2251FF) accent. Same retro terminal layout, corporate light palette. */
+  html[data-theme="mck"] {
+    /* Monochrome: electric McKinsey blue (#2251FF) + white, neutral cool greys
+       only. One blue everywhere — no secondary/teal blue tones. */
+    --bg: #ffffff; --panel: #eef2fb; --panel-soft: #f7f9fe; --panel-warm: #eef2fb;
+    --surface-strong: #e3e9f7; --text: #101828; --text-2: #39414f; --muted: #6b7482;
+    --faint-text: #99a1ad; --faint: #d4dcec; --line: #cbd5ea; --border: #d4dcec;
+    --accent: #2251ff; --accent-dark: #1a3fd0; --accent-2: #2251ff; --info: #2251ff;
+    --accent-wash: rgba(34,81,255,0.10); --accent-wash-strong: rgba(34,81,255,0.30);
+    --clay: #2251ff; --danger: #d0021b; --success: #027a48; --warning: #b7791f;
+    --ok: #027a48;
+    --shadow: 0 10px 26px -16px rgba(16,24,40,0.28);
+    --ring: 0 0 0 2px rgba(34,81,255,0.45);
+  }
+  /* Semantic washes retuned for white so badges/status chips stay legible. */
+  html[data-theme="mck"] .badge-red { background: rgba(208,2,27,0.10); }
+  html[data-theme="mck"] .badge-yellow { background: rgba(183,121,31,0.14); }
+  html[data-theme="mck"] .badge-green { background: rgba(2,122,72,0.12); }
+  html[data-theme="mck"] .status-label.done-label { background: rgba(2,122,72,0.12); }
+  html[data-theme="mck"] .action-btn.done-btn:hover { background: rgba(2,122,72,0.12); }
+  html[data-theme="mck"] .action-btn.progress-btn:hover { background: rgba(34,81,255,0.10); }
+  html[data-theme="mck"] .action-btn.blocked-btn:hover,
+  html[data-theme="mck"] .action-btn.delete-btn:hover { background: rgba(208,2,27,0.10); }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-sans);
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 22px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  /* Warm scrollbars everywhere */
+  * { scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+  *::-webkit-scrollbar { width: 10px; height: 10px; }
+  *::-webkit-scrollbar-thumb { background: var(--line); border: 3px solid var(--bg); border-radius: 999px; }
+  *::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+  *::-webkit-scrollbar-track { background: transparent; }
+
+  .container {
+    width: 100%;
+    max-width: none;
+    margin: 0 auto;
+    background: var(--panel-soft);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: none;
+    padding: 26px 26px 30px;
+  }
+
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 8px 4px 22px;
+    border-bottom: 1px solid var(--faint);
+    margin-bottom: 18px;
+  }
+
+  h1 { font-family: var(--font-serif); font-size: 30px; line-height: 1.1; font-weight: 500; letter-spacing: -0.01em; color: var(--text); }
+  .meta { font-size: 13px; color: var(--muted); margin-top: 6px; }
+  .header-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; align-items: center; }
+  .add-btn {
+    background: var(--accent);
+    color: var(--bg);
+    border: none;
+    padding: 10px 16px;
+    border-radius: 10px;
+    font-size: 13px;
+    font-weight: 550;
+    cursor: pointer;
+    transition: background 0.2s ease;
+    white-space: nowrap;
+  }
+  .add-btn:hover { background: var(--accent-dark); }
+  .secondary-btn {
+    background: transparent;
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+  .secondary-btn:hover { background: var(--surface-strong); border-color: var(--line); }
+
+  /* Focus-visible rings on all interactive controls (WCAG 2.4.7) */
+  .add-btn:focus-visible, .secondary-btn:focus-visible, .filter-btn:focus-visible,
+  .action-btn:focus-visible, .column-add-btn:focus-visible, .comment-btn:focus-visible,
+  .save-note-btn:focus-visible, .cancel-note-btn:focus-visible, .modal-cancel:focus-visible,
+  .modal-save:focus-visible, .seg-btn:focus-visible, .search-clear:focus-visible,
+  .status-dot:focus-visible, .task-text.editable:focus-visible, .cs-trigger:focus-visible {
+    outline: none;
+    box-shadow: var(--ring);
+  }
+  .status-dot:focus-visible { border-radius: 50%; }
+
+  /* ── Toolbar: search + density ─────────────────────────────────────── */
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+  .search {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    width: 100%;
+    max-width: 340px;
+    flex: 1 1 240px;
+  }
+  .search-icon { position: absolute; left: 11px; color: var(--muted); pointer-events: none; }
+  .search-input {
+    width: 100%;
+    font: inherit;
+    font-size: 13px;
+    color: var(--text);
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 9px 66px 9px 34px;
+    outline: none;
+    transition: border-color 0.15s, box-shadow 0.15s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .search-input::placeholder { color: var(--muted); opacity: 1; }
+  .search-input:hover { border-color: var(--accent); }
+  .search-input:focus-visible, .search-input:focus { border-color: var(--accent); box-shadow: var(--ring); }
+  .search-input::-webkit-search-decoration, .search-input::-webkit-search-cancel-button { -webkit-appearance: none; }
+  .search-kbd {
+    position: absolute; right: 11px;
+    display: inline-flex; align-items: center; justify-content: center;
+    min-width: 18px; height: 18px; padding: 0 5px;
+    font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+    font-size: 11px; line-height: 1; color: var(--muted);
+    background: var(--surface-strong); border: 1px solid var(--border);
+    border-radius: 6px; pointer-events: none;
+  }
+  .search[data-focused="true"] .search-kbd, .search[data-filled="true"] .search-kbd { display: none; }
+  .search-clear {
+    position: absolute; right: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; color: var(--muted);
+    background: transparent; border: none; border-radius: 999px; cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+  }
+  .search-clear[hidden] { display: none; }
+  .search-clear:hover { background: var(--surface-strong); color: var(--text); }
+
+  .seg { display: inline-flex; padding: 3px; background: var(--panel-warm); border: 1px solid var(--border); border-radius: 999px; }
+  .seg-btn {
+    appearance: none; border: 1px solid transparent; background: transparent; color: var(--text-2);
+    font: inherit; font-size: 12px; font-weight: 550; padding: 6px 14px; border-radius: 999px;
+    cursor: pointer; transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+  }
+  .seg-btn:hover { color: var(--text); }
+  .seg-btn[aria-pressed="true"] { background: var(--panel); color: var(--text); box-shadow: 0 1px 3px rgba(20,20,19,0.08); }
+
+  .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; padding-bottom: 8px; }
+  .filter-btn {
+    background: transparent; color: var(--text-2); border: 1px solid var(--border);
+    padding: 7px 12px; border-radius: 999px; flex: 0 0 auto; font-size: 12px;
+    cursor: pointer; transition: all 0.15s;
+  }
+  .filter-btn:hover { border-color: var(--line); background: var(--surface-strong); }
+  .filter-btn.active { background: var(--accent); color: var(--bg); border-color: var(--accent); }
+
+  .sprint-board {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(280px, 1fr));
+    gap: 14px;
+    align-items: start;
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+  .sprint-column { min-width: 280px; background: var(--panel-warm); border: 1px solid var(--border); border-radius: var(--radius-lg); overflow: hidden; }
+  .column-header {
+    display: flex; justify-content: space-between; align-items: flex-start; gap: 10px;
+    padding: 12px 16px; background: var(--surface-strong); border-bottom: 1px solid var(--border);
+  }
+  .column-title { color: var(--muted); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; }
+  .column-count { color: var(--muted); font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .column-tools { align-items: flex-end; display: flex; flex-direction: column; gap: 7px; }
+  .column-add-btn {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 999px; color: var(--text-2);
+    cursor: pointer; font-size: 11px; font-weight: 700; padding: 5px 9px; transition: all 0.15s;
+  }
+  .column-add-btn:hover { background: var(--surface-strong); border-color: var(--line); color: var(--text); }
+  .column-body {
+    display: flex; flex-direction: column; gap: 8px; padding: 10px; min-height: 180px;
+    border: 1px solid transparent; border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .column-body.drag-over { background: var(--accent-wash); border-color: var(--accent-wash-strong); }
+
+  .task-card {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 14px;
+    padding: 12px; cursor: grab; transition: box-shadow 0.15s, border-color 0.15s;
+  }
+  .task-card:hover { box-shadow: 0 2px 10px rgba(20,20,19,0.05); border-color: var(--line); }
+  .task-card:active { cursor: grabbing; }
+  .task-card.dragging { opacity: 0.6; box-shadow: var(--shadow); }
+  .task-card.urgent { box-shadow: inset 3px 0 0 var(--accent); }
+  .task-card.done-card { background: var(--bg); }
+
+  .task-marker { display: flex; align-items: center; justify-content: space-between; gap: 9px; margin-bottom: 10px; }
+  .task-number {
+    min-width: 30px; height: 26px; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid var(--border); border-radius: 999px; background: var(--surface-strong);
+    color: var(--text-2); font-size: 12px; font-weight: 650; font-variant-numeric: tabular-nums;
+  }
+  .status-dot { width: 16px; height: 16px; border-radius: 50%; border: 1.5px solid var(--line); flex-shrink: 0; cursor: pointer; transition: all 0.15s; }
+  .status-dot:hover { border-color: var(--text); }
+  .status-dot.done { background: var(--success); border-color: var(--success); }
+  .status-dot.in-progress { background: var(--clay); border-color: var(--clay); }
+  .status-dot.blocked { background: var(--danger); border-color: var(--danger); }
+  .status-dot.urgent-dot { border-color: var(--accent); }
+
+  .task-main { min-width: 0; }
+  .task-text { font-size: 14px; line-height: 1.45; letter-spacing: -0.01em; }
+  .task-text.editable { cursor: pointer; }
+  .task-text.editable:hover { color: var(--accent); text-decoration: underline; }
+  .task-text.crossed { text-decoration: line-through; color: var(--faint-text); }
+  .task-sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .task-meta-row { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 9px; }
+
+  .badge { display: inline-flex; align-items: center; min-height: 22px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; vertical-align: middle; }
+  .badge-red { background: rgba(251,73,52,0.15); color: var(--danger); }
+  .badge-yellow { background: rgba(250,189,47,0.16); color: var(--warning); }
+  .badge-green { background: rgba(184,187,38,0.15); color: var(--success); }
+  .badge-blue { background: var(--surface-strong); color: var(--text-2); }
+  .meta-pill, .points-pill { display: inline-flex; align-items: center; min-height: 22px; font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; }
+  .meta-pill { background: var(--surface-strong); color: var(--text-2); }
+  .points-pill { background: var(--accent-wash); color: var(--accent); border: 1px solid var(--accent-wash-strong); }
+
+  /* Due-date chip: flat bracketed marker, colored by urgency (retro palette). */
+  .due-chip {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 600; letter-spacing: 0.02em;
+    padding: 1px 6px; margin-right: 6px; border-radius: 4px;
+    border: 1px solid var(--border); color: var(--muted); white-space: nowrap;
+  }
+  .due-chip.due-soon { color: var(--warning); border-color: var(--warning); }
+  .due-chip.due-over { color: var(--danger); border-color: var(--danger); }
+  .lr-title .due-chip { margin-left: 8px; margin-right: 0; }
+
+  .task-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 10px; }
+  .action-btn {
+    font-size: 11px; padding: 5px 9px; border-radius: 999px; border: 1px solid var(--border);
+    background: var(--panel); color: var(--text-2); cursor: pointer; transition: all 0.15s;
+  }
+  .action-btn:hover { background: var(--surface-strong); border-color: var(--line); }
+  .action-btn.done-btn:hover { background: rgba(184,187,38,0.16); border-color: var(--success); color: var(--success); }
+  .action-btn.progress-btn:hover { background: rgba(250,189,47,0.16); border-color: var(--warning); color: var(--warning); }
+  .action-btn.blocked-btn:hover { background: rgba(251,73,52,0.14); border-color: var(--danger); color: var(--danger); }
+  .action-btn.delete-btn:hover { background: rgba(251,73,52,0.14); border-color: var(--danger); color: var(--danger); }
+  .status-label { font-size: 11px; font-weight: 600; padding: 5px 9px; border-radius: 999px; }
+  .status-label.done-label { background: rgba(184,187,38,0.16); color: var(--success); }
+
+  /* Collapsible note/comment panels (compact mode) */
+  .panel-collapse { margin-top: 10px; }
+  .panel-collapse > summary {
+    list-style: none; cursor: pointer; color: var(--muted); font-size: 10px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.08em; display: flex; align-items: center; gap: 6px;
+    padding: 4px 2px;
+  }
+  .panel-collapse > summary::-webkit-details-marker { display: none; }
+  .panel-collapse > summary::before {
+    content: ""; width: 7px; height: 7px; border-right: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor; transform: rotate(-45deg); transition: transform 0.15s;
+  }
+  .panel-collapse[open] > summary::before { transform: rotate(45deg); }
+  .panel-collapse > .panel-body { margin-top: 6px; }
+
+  .note-panel { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel-warm); min-height: 74px; padding: 10px 11px; }
+  .note-kicker { color: var(--muted); font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .note-display { color: var(--text-2); font-size: 12.5px; line-height: 1.45; cursor: pointer; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+  .note-display a, .comment-item a { color: var(--accent); text-decoration: underline; overflow-wrap: anywhere; }
+  .note-display a:hover, .comment-item a:hover { color: var(--accent-dark); }
+  .note-display.empty { color: var(--muted); font-style: italic; }
+  .note-display:hover { color: var(--text); }
+  .note-edit textarea {
+    width: 100%; font-size: 12.5px; padding: 8px 9px; border: 1px solid var(--line); border-radius: 10px;
+    resize: vertical; min-height: 72px; font-family: inherit; outline: none; background: var(--bg); color: var(--text);
+  }
+  .note-edit textarea:focus { border-color: var(--accent); box-shadow: var(--ring); }
+  .note-edit-btns { display: flex; gap: 6px; margin-top: 7px; justify-content: flex-end; }
+  .save-note-btn, .cancel-note-btn { font-size: 11px; padding: 5px 10px; border-radius: 999px; cursor: pointer; }
+  .save-note-btn { border: none; background: var(--accent); color: var(--bg); }
+  .save-note-btn:hover { background: var(--accent-dark); }
+  .cancel-note-btn { border: 1px solid var(--border); background: var(--panel); color: var(--text-2); }
+
+  .comments-panel { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); padding: 10px 11px; }
+  .comment-list { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+  .comment-item { background: var(--panel-warm); border: 1px solid var(--border); border-radius: 10px; color: var(--text-2); font-size: 12px; line-height: 1.4; padding: 7px 8px; white-space: pre-wrap; overflow-wrap: anywhere; word-break: break-word; }
+  .comment-meta { color: var(--muted); display: block; font-size: 10px; font-weight: 650; margin-bottom: 3px; text-transform: uppercase; letter-spacing: 0.06em; }
+  .comment-composer { display: grid; grid-template-columns: 1fr auto; gap: 6px; align-items: start; }
+  .comment-input { border: 1px solid var(--line); border-radius: 10px; color: var(--text); font: inherit; font-size: 12px; min-height: 38px; outline: none; padding: 8px 9px; resize: vertical; }
+  .comment-input::placeholder { color: var(--muted); opacity: 1; }
+  .comment-input:focus { border-color: var(--accent); box-shadow: var(--ring); }
+  .comment-btn { background: var(--accent); border: none; border-radius: 999px; color: var(--bg); cursor: pointer; font-size: 11px; font-weight: 650; padding: 8px 11px; }
+  .comment-btn:hover { background: var(--accent-dark); }
+
+  /* ── Custom dropdown (.cs-select) — replaces native <select> ─────────── */
+  .cs-select { position: relative; display: inline-block; }
+  .cs-select.cs-block { display: block; width: 100%; }
+  .cs-trigger {
+    display: inline-flex; align-items: center; justify-content: space-between; gap: 6px;
+    font: inherit; color: var(--text-2); text-align: left; cursor: pointer;
+    background: var(--surface-strong); border: 1px solid transparent; border-radius: 999px;
+    font-size: 11px; font-weight: 600; padding: 3px 8px; min-height: 22px; max-width: 160px;
+    transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+  }
+  .cs-trigger:hover { border-color: var(--line); }
+  .cs-block .cs-trigger {
+    width: 100%; max-width: none; background: var(--panel); border: 1px solid var(--line);
+    border-radius: 10px; font-size: 13px; font-weight: 400; color: var(--text); padding: 9px 10px;
+  }
+  .cs-select[data-open="true"] .cs-trigger { border-color: var(--accent); box-shadow: var(--ring); }
+  .cs-value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .cs-chevron { flex-shrink: 0; color: var(--muted); transition: transform 0.18s ease; }
+  .cs-select[data-open="true"] .cs-chevron { transform: rotate(180deg); }
+  .cs-panel {
+    position: absolute; top: calc(100% + 6px); left: 0; z-index: 60; min-width: 100%;
+    margin: 0; padding: 5px; list-style: none; max-height: 260px; overflow-y: auto;
+    background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-md);
+    box-shadow: var(--shadow);
+  }
+  .cs-panel[hidden] { display: none; }
+  .cs-option {
+    display: flex; align-items: center; gap: 8px; padding: 8px 9px; font-size: 13px;
+    color: var(--text-2); border-radius: 8px; cursor: pointer; white-space: nowrap;
+  }
+  .cs-option:hover, .cs-option.cs-active { background: var(--surface-strong); color: var(--text); }
+  .cs-option[aria-selected="true"] { color: var(--accent); font-weight: 600; }
+  .cs-check { display: inline-flex; width: 14px; height: 14px; flex-shrink: 0; color: var(--accent); opacity: 0; }
+  .cs-option[aria-selected="true"] .cs-check { opacity: 1; }
+  .cs-option.cs-custom { border-top: 1px solid var(--faint); margin-top: 3px; padding-top: 9px; color: var(--muted); }
+
+  /* ── Modal ───────────────────────────────────────────────────────────── */
+  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(20,20,19,0.42); z-index: 100; justify-content: center; align-items: center; padding: 18px; }
+  .modal-overlay.open { display: flex; }
+  .ai-key-note { color: var(--muted); font-size: 12px; margin: 2px 0 10px; line-height: 1.45; }
+  .ai-key-note b { color: var(--text); font-weight: 700; }
+  .ai-key-err { color: var(--danger); font-size: 12px; margin: 8px 0 0; }
+  .mcp-intro { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 0 0 14px; }
+  .mcp-status-line { font-size: 12px; color: var(--text-2); margin: 0 0 12px; padding: 8px 10px; border: 1px solid var(--border); border-radius: var(--radius); background: var(--panel-2, var(--panel)); }
+  .mcp-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 10px; margin: 12px 0 16px; }
+  .mcp-card { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; background: var(--panel); display: flex; flex-direction: column; gap: 8px; min-height: 120px; }
+  .mcp-card h3 { font-size: 14px; margin: 0; font-weight: 700; }
+  .mcp-card p { font-size: 12px; color: var(--muted); margin: 0; line-height: 1.4; flex: 1; }
+  .mcp-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: .03em; text-transform: uppercase; padding: 2px 7px; border-radius: 999px; border: 1px solid var(--border); color: var(--text-2); width: fit-content; }
+  .mcp-badge.connected { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, var(--border)); }
+  .mcp-badge.available { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 35%, var(--border)); }
+  .mcp-badge.not_installed { opacity: .7; }
+  .mcp-card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+  .mcp-card-actions button { font-size: 12px; padding: 6px 10px; }
+  .mcp-manual { margin-top: 8px; }
+  .mcp-manual textarea { width: 100%; min-height: 120px; font-family: var(--font-mono); font-size: 11px; margin-top: 8px; }
+  .mcp-footnote { font-size: 12px; color: var(--muted); line-height: 1.45; margin: 8px 0 0; }
+  .help-keys { list-style: none; margin: 6px 0 4px; padding: 0; }
+  .help-keys li { display: flex; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px dashed var(--line); }
+  .help-keys li:last-child { border-bottom: none; }
+  .help-keys kbd {
+    flex: 0 0 auto; min-width: 34px; text-align: center; font-family: inherit; font-size: 12px;
+    padding: 3px 8px; color: var(--accent); background: var(--panel-soft);
+    border: 1px solid var(--border); border-radius: 3px;
+  }
+  .help-keys span { color: var(--text-2); font-size: 13px; }
+  .modal { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 24px; width: 500px; max-width: 100%; box-shadow: var(--shadow); max-height: 90vh; overflow-y: auto; }
+  .modal h2 { font-family: var(--font-serif); font-size: 21px; font-weight: 500; margin-bottom: 14px; letter-spacing: -0.01em; }
+  .modal label { font-size: 12px; font-weight: 600; color: var(--text-2); display: block; margin-bottom: 5px; margin-top: 12px; }
+  .modal input, .modal textarea {
+    width: 100%; font-size: 13px; padding: 9px 10px; border: 1px solid var(--line);
+    border-radius: 8px; font-family: inherit; outline: none; background: var(--bg); color: var(--text);
+  }
+  .modal input::placeholder, .modal textarea::placeholder { color: var(--muted); opacity: 1; }
+  .modal input:focus, .modal textarea:focus { border-color: var(--accent); box-shadow: var(--ring); }
+  /* Hide native number spinners */
+  .modal input[type="number"] { -moz-appearance: textfield; appearance: textfield; }
+  .modal input[type="number"]::-webkit-outer-spin-button,
+  .modal input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  /* Themed checkbox */
+  .modal input[type="checkbox"] {
+    appearance: none; -webkit-appearance: none; width: 16px; height: 16px; flex-shrink: 0;
+    border: 1.5px solid var(--line); border-radius: 5px; background: var(--panel); cursor: pointer;
+    padding: 0; position: relative; transition: background 0.15s, border-color 0.15s;
+  }
+  .modal input[type="checkbox"]:hover { border-color: var(--accent); }
+  .modal input[type="checkbox"]:checked { background: var(--accent); border-color: var(--accent); }
+  .modal input[type="checkbox"]:checked::after {
+    content: ""; position: absolute; left: 4.5px; top: 1.5px; width: 4px; height: 8px;
+    border: solid var(--bg); border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .modal input[type="checkbox"]:focus-visible { outline: none; box-shadow: var(--ring); }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+  /* status segmented buttons + urgent toggle in the edit/add modal */
+  .seg-group { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 4px; }
+  .seg-btn {
+    flex: 1 1 0; background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); font-family: inherit; font-size: 11px; letter-spacing: .05em;
+    text-transform: uppercase; padding: 8px 6px; border-radius: 2px; cursor: pointer; white-space: nowrap;
+    transition: color .12s, border-color .12s, background .12s;
+  }
+  .seg-btn:hover { border-color: var(--line); color: var(--text); }
+  .seg-btn.active { background: var(--surface-strong); }
+  .seg-btn[data-state="todo"].active { color: var(--info); border-color: var(--info); box-shadow: inset 0 0 0 1px var(--info); }
+  .seg-btn[data-state="in-progress"].active { color: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+  .seg-btn[data-state="blocked"].active { color: var(--danger); border-color: var(--danger); box-shadow: inset 0 0 0 1px var(--danger); }
+  .seg-btn[data-state="done"].active { color: var(--success); border-color: var(--success); box-shadow: inset 0 0 0 1px var(--success); }
+
+  .urgent-toggle {
+    margin-top: 12px; width: 100%; background: transparent; border: 1px dashed var(--border);
+    color: var(--muted); font-family: inherit; font-size: 12px; letter-spacing: .05em;
+    text-transform: uppercase; padding: 9px; border-radius: 2px; cursor: pointer;
+    transition: color .12s, border-color .12s, background .12s;
+  }
+  .urgent-toggle:hover { border-color: var(--danger); color: var(--text); }
+  .urgent-toggle.active {
+    background: var(--danger); border-style: solid; border-color: var(--danger);
+    color: var(--panel); font-weight: 700;
+  }
+  .modal-cancel, .modal-save { font-size: 13px; padding: 8px 16px; border-radius: 10px; cursor: pointer; transition: background 0.2s ease; }
+  .modal-cancel { border: 1px solid var(--border); background: var(--panel); color: var(--text-2); }
+  .modal-cancel:hover { background: var(--surface-strong); }
+  .modal-save { border: none; background: var(--accent); color: var(--bg); }
+  .modal-save:hover { background: var(--accent-dark); }
+
+  .empty-state { text-align: center; padding: 44px; color: var(--muted); font-size: 13px; }
+  .column-body .empty-state { border: 1px dashed var(--line); border-radius: 8px; padding: 18px 10px; background: transparent; }
+  .conn-banner {
+    display: none; background: rgba(251,73,52,0.14); color: var(--danger); border: 1px solid var(--danger);
+    border-radius: 8px; padding: 10px 14px; font-size: 13px; margin-bottom: 14px;
+  }
+  .conn-banner.show { display: block; }
+
+  /* ── Compact = flat list view (like the preview): one table, all stories ─── */
+  .story-list { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 3px; background: var(--panel); overflow: hidden; }
+  .list-head, .list-row { display: grid; grid-template-columns: 56px 84px 26px 1fr 170px 60px; align-items: center; gap: 10px; padding: 5px 12px; font-size: 12.5px; white-space: nowrap; }
+  .list-head { color: var(--faint-text); text-transform: uppercase; letter-spacing: .09em; font-size: 10.5px; background: var(--surface-strong); border-bottom: 1px solid var(--border); }
+  .list-row { border-bottom: 1px dashed var(--border); cursor: pointer; }
+  .list-row:hover { background: var(--surface-strong); }
+  .list-row:last-child { border-bottom: none; }
+  .list-row.done { opacity: .6; }
+  .lr-id { color: var(--faint-text); font-variant-numeric: tabular-nums; }
+  .lr-title { display: flex; min-width: 0; color: var(--text); }
+  .lr-title > span:first-child { overflow: hidden; text-overflow: ellipsis; }
+  .lr-title .leader { color: var(--faint-text); flex: 0 0 auto; }
+  .list-row.done .lr-title > span:first-child { text-decoration: line-through; text-decoration-color: var(--faint-text); }
+  .lr-epic { color: var(--accent-2); text-transform: uppercase; letter-spacing: .04em; overflow: hidden; text-overflow: ellipsis; }
+  .lr-pts { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .lr-urg { color: var(--danger); font-weight: 700; text-align: center; }
+  @media (max-width: 720px) {
+    .list-head, .list-row { grid-template-columns: 44px 64px 22px 1fr 56px; }
+    .lr-epic { display: none; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cs-chevron, .panel-collapse > summary::before { transition: none; }
+  }
+
+  @media (max-width: 820px) {
+    body { padding: 10px; }
+    .container { padding: 16px; border-radius: 22px; }
+    header { align-items: stretch; flex-direction: column; }
+    .header-actions { justify-content: flex-start; }
+    .search { max-width: none; }
+    .sprint-board { display: flex; overflow-x: auto; scroll-snap-type: x proximity; }
+    .sprint-board.compact, .sprint-board { }
+    .sprint-column { width: 78vw; flex: 0 0 78vw; scroll-snap-align: start; }
+    .note-panel { min-height: auto; }
+  }
+
+  /* ── view toggle (board / dashboard) ─────────────────────────────────────── */
+  #dash-view { display: none; }
+  html[data-view="dash"] #task-list { display: none; }
+  html[data-view="dash"] #dash-view { display: flex; flex-direction: column; gap: 12px; }
+
+  /* ── dashboard ───────────────────────────────────────────────────────────── */
+  .tiles { display: grid; grid-template-columns: repeat(6, minmax(0,1fr)); gap: 12px; }
+  .tile { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; }
+  .tile .num { font-family: var(--font-serif); font-size: 44px; line-height: .9; color: var(--text); }
+  .tile .lbl { font-size: 11px; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+  .tile.t-todo .num { color: var(--info); }
+  .tile.t-wip .num { color: var(--warning); }
+  .tile.t-blocked .num { color: var(--danger); }
+  .tile.t-done .num { color: var(--success); }
+  .tile.t-urgent .num { color: var(--danger); }
+  .tile.t-pts .num { color: var(--accent-2); }
+  .dash-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .panel-card { border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--panel); overflow: hidden; }
+  .panel-head { padding: 7px 12px; border-bottom: 1px solid var(--border); background: var(--surface-strong); text-transform: uppercase; letter-spacing: .1em; font-size: 12px; font-weight: 700; color: var(--text); }
+  .panel-head::before { content: "# "; color: var(--faint-text); }
+  .panel-body { padding: 10px 12px; display: flex; flex-direction: column; gap: 7px; }
+  .bar-row { display: grid; grid-template-columns: 132px 1fr 70px; align-items: center; gap: 10px; font-size: 12.5px; }
+  .bar-lbl { color: var(--text); text-transform: uppercase; letter-spacing: .03em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .bar-track { font-family: var(--font-sans); color: var(--accent); letter-spacing: 1px; white-space: nowrap; overflow: hidden; }
+  .bar-track .empty { color: var(--faint); }
+  .bar-val { color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
+  .urgent-line { font-size: 12.5px; color: var(--text); }
+  .urgent-line .id { color: var(--danger); font-weight: 700; }
+  .urgent-line + .urgent-line { border-top: 1px dashed var(--border); padding-top: 6px; }
+  @media (max-width: 1240px) { .tiles { grid-template-columns: repeat(3, minmax(0,1fr)); } }
+  @media (max-width: 900px) { .tiles { grid-template-columns: repeat(2, minmax(0,1fr)); } .dash-cols { grid-template-columns: 1fr; } }
+
+  /* ── boot screen (always gruvbox, independent of selected theme) ──────────── */
+  #boot {
+    position: fixed; inset: 0; z-index: 10000; display: none; flex-direction: column;
+    justify-content: center; background: #1d2021; color: #ebdbb2;
+    padding: 5vh 7vw; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 13.5px; line-height: 1.6;
+    transition: opacity .35s ease; overflow: auto;
+  }
+  #boot .boot-ansi { color: #928374; font-size: 12px; line-height: 1; white-space: pre; overflow: hidden; margin-bottom: 2px; }
+  #boot .boot-brand { font-family: "VT323", "JetBrains Mono", ui-monospace, monospace; font-size: 64px; line-height: .9; color: #fe8019; margin: 2px 0; letter-spacing: .04em; }
+  #boot .boot-sub { color: #a89984; font-size: 13px; margin-bottom: 14px; letter-spacing: .05em; }
+  #boot-out div { white-space: pre-wrap; }
+  #boot .ok { color: #b8bb26; } #boot .hot { color: #fabd2f; } #boot .head { color: #fe8019; }
+  #boot .boot-caret { display: inline-block; width: .6ch; height: 1.05em; background: #fe8019; vertical-align: -0.15em; animation: bootblink 1.06s steps(1) infinite; }
+  #boot .boot-launch {
+    margin-top: 22px; align-self: flex-start; cursor: pointer;
+    font-family: inherit; font-size: 14px; letter-spacing: .06em; font-weight: 700;
+    color: #1d2021; background: #fe8019; border: 1px solid #fe8019; padding: 9px 18px; border-radius: 4px;
+    animation: bootblink 1.4s steps(1) infinite;
+  }
+  #boot .boot-launch:hover { background: #fabd2f; border-color: #fabd2f; animation: none; }
+  #boot .boot-launch:focus-visible { outline: none; box-shadow: 0 0 0 2px rgba(254,128,25,.55); animation: none; }
+  @keyframes bootblink { 50% { opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { #boot .boot-caret, #boot .boot-launch { animation: none; opacity: 1; } }
+
+  /* ═══ RETRO TERMINAL SKIN — flatten the leftover soft/rounded chrome ═══════ */
+  body { font-size: 14px; }
+  ::selection { background: var(--text); color: var(--bg); }
+  * { scrollbar-color: var(--border) transparent; }
+  *::-webkit-scrollbar { width: 9px; height: 9px; }
+  *::-webkit-scrollbar-thumb { background: var(--border); border: 0; border-radius: 0; }
+  *::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  /* shell / header */
+  .container { border-radius: 4px; padding: 16px 16px 20px; }
+  header { border-bottom: 1px dashed var(--border); padding: 4px 2px 14px; margin-bottom: 14px; }
+  /* compact single-line header (matches retro-preview.html topbar) */
+  .brand-line { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; min-width: 0; }
+  h1 { color: var(--accent); text-transform: uppercase; letter-spacing: .04em; font-size: 26px; line-height: 1; white-space: nowrap; }
+  .title-version { font-family: var(--font-sans); font-size: 12px; color: var(--faint-text); border: 1px solid var(--border); padding: 1px 8px; border-radius: 3px; cursor: pointer; letter-spacing: .04em; font-variant-numeric: tabular-nums; white-space: nowrap; align-self: center; }
+  .title-version:hover { color: var(--text); border-color: var(--muted); }
+  .title-version .up { color: var(--success); margin-left: 4px; font-weight: 700; }
+  .meta { font-family: var(--font-sans); font-size: 12.5px; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .meta::before { content: var(--shell-prompt, "storydeck@board:~$ "); color: var(--success); }
+
+  /* buttons */
+  .add-btn, .secondary-btn { border-radius: 2px; font-weight: 700; letter-spacing: .03em; padding: 8px 14px; }
+
+  /* retro header buttons: flat, uppercase; secondaries become bracketed ghost commands */
+  .header-actions .add-btn {
+    text-transform: uppercase; letter-spacing: .08em; font-size: 12px; padding: 7px 13px;
+  }
+  .header-actions .secondary-btn {
+    background: transparent; border-color: transparent; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .08em; font-size: 12px; padding: 7px 6px;
+  }
+  .header-actions .secondary-btn:hover { background: transparent; border-color: transparent; color: var(--text); }
+  .header-actions .danger-btn:hover { color: var(--danger); }
+  .header-actions .secondary-btn::before { content: "[ "; color: var(--faint-text); }
+  .header-actions .secondary-btn::after  { content: " ]"; color: var(--faint-text); }
+
+  /* segmented controls: joined, flat, sharp */
+  .seg { border-radius: 3px; padding: 0; background: transparent; overflow: hidden; }
+  .seg-btn { border-radius: 0; border: none; padding: 6px 12px; font-weight: 500; letter-spacing: .03em; }
+  .seg-btn + .seg-btn { border-left: 1px solid var(--border); }
+  .seg-btn[aria-pressed="true"] { background: var(--text); color: var(--bg); box-shadow: none; }
+  #boot-btn { border-radius: 3px; }
+
+  /* filter chips — bracketed like the preview: [ALL] [AMS] … */
+  .filter-btn { border-radius: 3px; text-transform: uppercase; letter-spacing: .03em; font-size: 11.5px; font-weight: 500; }
+  .filter-btn::before { content: "["; color: var(--faint-text); margin-right: 3px; }
+  .filter-btn::after { content: "]"; color: var(--faint-text); margin-left: 3px; }
+  .filter-btn.active { background: var(--accent-2); border-color: var(--accent-2); color: var(--bg); }
+  .filter-btn.active::before, .filter-btn.active::after { color: var(--bg); }
+  .filter-btn.active:hover { background: var(--accent-2); border-color: var(--accent-2); }
+
+  /* search */
+  .search-input { border-radius: 3px; }
+  .search-kbd, .search-clear { border-radius: 2px; }
+
+  /* columns */
+  .sprint-column { border-radius: 3px; }
+  .column-header { align-items: baseline; }
+  .column-title { letter-spacing: .1em; }
+  .column-title::before { content: "# "; color: var(--faint-text); }
+  .column-title.todo { color: var(--info); }
+  .column-title.in-progress { color: var(--warning); }
+  .column-title.blocked { color: var(--danger); }
+  .column-title.done { color: var(--success); }
+  .column-count { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
+  .column-add-btn { border-radius: 3px; text-transform: lowercase; letter-spacing: .02em; }
+  .column-body { border-radius: 0 0 3px 3px; }
+
+  /* cards: flat, sharp, no drop shadow */
+  .task-card { border-radius: 3px; }
+  .task-card:hover { box-shadow: none; background: var(--surface-strong); border-color: var(--muted); }
+  .task-card.urgent { box-shadow: none; border-left: 3px solid var(--accent); }
+  .task-card.done-card { opacity: .62; }
+  .task-card.dragging { box-shadow: none; outline: 1px dashed var(--accent); }
+  .task-marker { margin-bottom: 7px; }
+  .task-number { min-width: auto; height: auto; border: none; background: transparent; color: var(--faint-text); font-weight: 400; padding: 0; }
+  .status-dot { border-radius: 2px; width: 15px; height: 15px; }
+  .status-dot:focus-visible { border-radius: 2px; }
+  .task-text { font-size: 13.5px; line-height: 1.4; }
+
+  /* [TAG] status chips + urgent bang + points */
+  .tag { display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 700; letter-spacing: .05em; border: 1px solid currentColor; border-radius: 2px; padding: 1px 4px; }
+  .tag-todo { color: var(--info); }
+  .tag-in-progress { color: var(--warning); }
+  .tag-blocked { color: var(--danger); }
+  .tag-done { color: var(--success); }
+  .bang { color: var(--danger); font-weight: 700; letter-spacing: -.5px; }
+  .pts { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 11.5px; margin-left: auto; }
+
+  /* epic dropdown → flat terminal chip (pink accent, like the preview .epic) */
+  .card-foot .cs-trigger { background: transparent; border: 1px solid transparent; border-radius: 2px; color: var(--accent-2); text-transform: uppercase; letter-spacing: .04em; font-weight: 600; max-width: 190px; padding-left: 0; }
+  .card-foot .cs-trigger:hover { border-color: var(--accent-2); padding-left: 8px; }
+  .card-foot .cs-chevron { color: var(--accent-2); opacity: .6; }
+  .task-card:hover .card-foot .cs-chevron { opacity: 1; }
+
+  /* notes / comments / actions / dropdown panel / modal → sharp */
+  .note-panel, .comments-panel, .comment-item, .comment-input,
+  .note-edit textarea, .cs-panel, .cs-option,
+  .modal, .modal input, .modal textarea { border-radius: 3px; }
+  .save-note-btn, .cancel-note-btn, .comment-btn, .action-btn, .status-label,
+  .modal-cancel, .modal-save, .conn-banner, .column-body .empty-state { border-radius: 3px; }
+  .action-btn { text-transform: lowercase; letter-spacing: .02em; }
+  .modal input[type="checkbox"] { border-radius: 2px; }
+  .modal h2 { text-transform: uppercase; letter-spacing: .04em; color: var(--accent); }
+  .cs-block .cs-trigger { border-radius: 3px; }
+
+  /* card anatomy — matches the preview: meta row · title · dashed rule · foot */
+  .card-meta { display: flex; align-items: center; gap: 8px; margin-bottom: 5px; font-size: 11.5px; }
+  .meta-spacer { flex: 1 1 auto; }
+  .card-meta .pts { margin-left: 0; }
+  .card-sep { border: none; border-top: 1px dashed var(--border); margin: 7px 0 6px; }
+  .card-foot { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; }
+  .counts { display: flex; align-items: center; gap: 5px; }
+  /* always-visible markers that a story carries a note / comments */
+  .mark {
+    display: inline-flex; align-items: center; gap: 4px;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .05em;
+    border: 1px solid currentColor; border-radius: 2px; padding: 1px 5px; line-height: 1.4;
+  }
+  .mark::before { content: ''; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+  .mark-note { color: var(--info); }
+  .mark-comment { color: var(--accent-2); }
+  .task-card:hover .mark { filter: brightness(1.12); }
+  /* filled dot on the Notes summary when a note exists */
+  .sum-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--info); display: inline-block; }
+  .panel-collapse.has-content > summary { color: var(--muted); }
+  .panel-collapse.has-content > summary::before { border-color: var(--muted); }
+
+  /* shell: full-bleed panels instead of one big rounded card */
+  body { padding: 14px; }
+  .container { background: transparent; border: none; border-radius: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  header { background: var(--panel); border: 1px solid var(--border); border-radius: 3px; padding: 9px 14px; margin-bottom: 0; align-items: center; }
+  .toolbar, .filters { margin-bottom: 0; padding-bottom: 0; }
+  .filters { border-top: 1px dashed var(--border); padding-top: 10px; align-items: center; }
+  .filter-lead { color: var(--faint-text); font-size: 12px; letter-spacing: .05em; margin-right: 2px; }
+  /* status prefilter row: grouped tight under the epic row */
+  .status-filters { border-top: none; padding-top: 6px; }
+
+  /* clickable status tags → quick move menu */
+  .tag-btn { cursor: pointer; transition: filter .12s ease, box-shadow .12s ease; }
+  .tag-btn:hover { filter: brightness(1.15); box-shadow: 0 0 0 1px currentColor inset; }
+  .tag-btn:focus-visible { outline: none; box-shadow: 0 0 0 2px var(--accent); }
+  .status-menu {
+    position: fixed; z-index: 9000; min-width: 168px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 3px;
+    box-shadow: var(--shadow); padding: 4px; display: flex; flex-direction: column; gap: 2px;
+  }
+  .status-menu-head {
+    color: var(--faint-text); font-size: 10.5px; text-transform: uppercase;
+    letter-spacing: .08em; padding: 4px 7px 5px; border-bottom: 1px dashed var(--border); margin-bottom: 2px;
+  }
+  .status-menu-item {
+    display: flex; align-items: center; gap: 9px; width: 100%;
+    background: transparent; border: none; color: var(--text-2);
+    font-family: inherit; font-size: 12.5px; text-align: left;
+    padding: 6px 8px; border-radius: 2px; cursor: pointer;
+  }
+  .status-menu-item .smi-label { flex: 1 1 auto; }
+  .status-menu-item .smi-cur { color: var(--accent); font-size: 10px; }
+  .status-menu-item:hover, .status-menu-item.current { background: var(--surface-strong); color: var(--text); }
+
+  /* ── AI ask bar + chat window (retro terminal) ─────────────────────────── */
+  .ai-bar {
+    display: flex; align-items: center; gap: 10px;
+    border: 1px solid var(--border); border-radius: 3px;
+    background: var(--panel); padding: 8px 12px; margin-bottom: 10px;
+  }
+  .ai-prompt { color: var(--accent); font-size: 13px; white-space: nowrap; letter-spacing: .02em; flex: 0 0 auto; }
+  .ai-input {
+    flex: 1 1 auto; min-width: 0; background: transparent; border: none; outline: none;
+    color: var(--text); font-family: inherit; font-size: 13px;
+  }
+  .ai-input::placeholder { color: var(--faint-text); }
+  .ai-send {
+    flex: 0 0 auto; background: var(--accent); color: var(--panel);
+    border: none; border-radius: 3px; padding: 5px 14px; font-family: inherit;
+    font-size: 12px; letter-spacing: .06em; cursor: pointer; text-transform: uppercase;
+  }
+  .ai-send:hover { filter: brightness(1.08); }
+  .ai-send:disabled { opacity: .5; cursor: progress; }
+  .ai-bar:focus-within { border-color: var(--accent); }
+  /* Active-provider chip: compact, bracketed, monospace; opens the AI-key modal. */
+  .ai-status {
+    flex: 0 0 auto; background: transparent; color: var(--muted);
+    border: 1px solid var(--border); border-radius: 3px; padding: 4px 9px;
+    font-family: inherit; font-size: 11px; letter-spacing: .04em; cursor: pointer;
+    text-transform: lowercase; white-space: nowrap;
+  }
+  .ai-status:hover { color: var(--text); border-color: var(--accent); }
+  .ai-status.ai-on { color: var(--success); border-color: var(--success); }
+  .ai-status.ai-off { color: var(--faint-text); }
+  .ai-status:focus-visible { outline: none; box-shadow: var(--ring); }
+
+  .ai-chat {
+    position: relative; border: 1px solid var(--border); border-radius: 3px;
+    background: var(--panel); padding: 10px 12px 10px; margin-bottom: 14px;
+  }
+  .ai-chat-tools { position: absolute; top: 6px; right: 8px; display: flex; align-items: center; gap: 8px; }
+  .ai-chat-btn {
+    background: transparent; border: none; color: var(--faint-text); cursor: pointer;
+    font-family: inherit; font-size: 11px; line-height: 1; padding: 2px 4px;
+    text-transform: uppercase; letter-spacing: .05em;
+  }
+  .ai-chat-btn:hover { color: var(--text); }
+  .ai-chat-close { font-size: 13px; letter-spacing: 0; }
+  .ai-chat-close:hover { color: var(--danger); }
+  .ai-log { display: flex; flex-direction: column; gap: 4px; max-height: 220px; overflow-y: auto; padding-right: 18px; }
+  .ai-line { font-size: 12.5px; line-height: 1.45; white-space: pre-wrap; word-break: break-word; }
+  .ai-line.user { color: var(--text); }
+  .ai-line.user::before { content: '> '; color: var(--accent); }
+  .ai-line.ai { color: var(--muted); }
+  .ai-line.ai::before { content: 'AI ▸ '; color: var(--info); }
+  .ai-line.act { color: var(--ok, #8ec07c); }
+  .ai-line.act::before { content: '  '; }
+  .ai-line.err { color: var(--danger); }
+  .ai-line.err::before { content: 'AI ✗ '; }
+  .ai-line.pending { color: var(--faint-text); font-style: italic; }
+  /* when a status prefilter isolates one column, don't stretch it full-bleed */
+  .sprint-board.single { grid-template-columns: minmax(280px, 680px); }
+
+  /* compact = true one-line list rows (rewritten for new card anatomy) */
+  .sprint-board.compact .task-card { border-radius: 3px; padding: 4px 9px; display: flex; align-items: center; gap: 9px; }
+  .sprint-board.compact .card-meta { margin-bottom: 0; flex: 0 0 auto; gap: 6px; }
+  .sprint-board.compact .card-meta .meta-spacer,
+  .sprint-board.compact .card-meta .pts { display: none; }
+  .sprint-board.compact .task-text { flex: 1 1 auto; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 12.5px; }
+  .sprint-board.compact .card-sep,
+  .sprint-board.compact .card-foot,
+  .sprint-board.compact .task-actions,
+  .sprint-board.compact .panel-collapse { display: none; }
+
+  /* actions + notes/comments are on-demand → dense, display-first cards like the preview */
+  .sprint-board:not(.compact) .task-actions,
+  .sprint-board:not(.compact) .panel-collapse { display: none; margin-top: 8px; }
+  .sprint-board:not(.compact) .task-card:hover .task-actions,
+  .sprint-board:not(.compact) .task-card:focus-within .task-actions { display: flex; }
+  .sprint-board:not(.compact) .task-card:hover .panel-collapse,
+  .sprint-board:not(.compact) .task-card:focus-within .panel-collapse { display: block; }
+  .panel-collapse > summary { display: flex; color: var(--faint-text); font-size: 10px; }
+  .panel-collapse > summary::before { border-color: var(--faint-text); }
+
+  /* bottom status bar + legend */
+  .statusbar { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; border: 1px solid var(--border); background: var(--surface-strong); padding: 5px 12px; border-radius: 3px; font-size: 12px; color: var(--muted); }
+  .statusbar .mode { color: var(--bg); background: var(--success); padding: 1px 8px; font-weight: 700; letter-spacing: .06em; border-radius: 2px; }
+  .statusbar .hints { display: flex; gap: 14px; flex-wrap: wrap; }
+  .statusbar .hints span kbd { color: var(--warning); font-family: var(--font-sans); font-size: 12px; }
+  .statusbar .status-right { margin-left: auto; color: var(--faint-text); font-variant-numeric: tabular-nums; }
+  .statusbar .status-right b { color: var(--text); font-weight: 500; }
+  .statusbar .ver-badge { margin-left: 10px; background: transparent; border: 1px solid var(--border); color: var(--faint-text); font: inherit; font-size: 11px; padding: 1px 8px; border-radius: 2px; cursor: pointer; letter-spacing: .04em; font-variant-numeric: tabular-nums; }
+  .statusbar .ver-badge:hover { color: var(--text); border-color: var(--muted); }
+  .statusbar .ver-badge .up { color: var(--success); margin-left: 5px; font-weight: 700; }
+  .legend { font-size: 11px; color: var(--faint-text); padding: 0 2px; }
+  .legend b { color: var(--muted); font-weight: 500; }
+  @media (max-width: 700px) { .statusbar .hints { display: none; } }
+  .toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%) translateY(10px); background: var(--surface-strong); border: 1px solid var(--border); color: var(--text); padding: 10px 15px; border-radius: 3px; font-size: 13px; line-height: 1.5; box-shadow: 0 6px 24px rgba(0,0,0,.35); opacity: 0; pointer-events: none; transition: opacity .18s ease, transform .18s ease; z-index: 9999; max-width: 90vw; white-space: pre-line; font-variant-numeric: tabular-nums; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<div id="boot" aria-hidden="true">
+  <pre class="boot-ansi">░▒▓█ STORYDECK BBS ██████████████████████████████████████ node: board@localhost · 2400-N-8-1 █▓▒░</pre>
+  <div class="boot-brand">STORYDECK</div>
+  <div class="boot-sub" id="boot-sub">local-first sprint deck  ·  on-device only</div>
+  <div id="boot-out"></div>
+  <span class="boot-caret"></span>
+  <button type="button" id="boot-launch" class="boot-launch" hidden>[ enter board ]</button>
+</div>
+
+<div class="container">
+  <header>
+    <div class="brand-line">
+      <h1 id="board-title">StoryDeck</h1>
+      <span class="title-version" id="title-version" onclick="showVersionInfo()" title="Version — click for details" hidden></span>
+      <span class="meta"><span id="meta-line">Loading…</span></span>
+    </div>
+    <div class="header-actions">
+      <button class="add-btn" onclick="openModal()">+ Add story</button>
+      <button class="add-btn secondary-btn" onclick="exportJSON()" title="Save a portable copy of the board (e.g. to move to another Mac)">Backup</button>
+      <button class="add-btn secondary-btn" onclick="openImportPicker()" title="Restore the board from a backup file (replaces current stories)">Restore</button>
+      <button class="add-btn secondary-btn" id="ai-key-btn" onclick="openAiKeyModal()" title="Connect your own AI key (OpenAI / Anthropic / Cursor)">AI key</button>
+      <button class="add-btn secondary-btn" id="mcp-connect-btn" onclick="openMcpModal()" title="Connect external AI agents to your board via MCP">Connect AI</button>
+      <button class="add-btn secondary-btn danger-btn" onclick="startFresh()" title="Clear all stories and start an empty board (a backup is saved first)">Start fresh</button>
+      <input type="file" id="import-json-input" accept="application/json,.json" style="display:none" onchange="importJSON(event)" />
+    </div>
+  </header>
+
+  <div class="conn-banner" id="conn-banner"></div>
+
+  <div class="toolbar">
+    <div class="search" role="search" id="search-wrap">
+      <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+      <input type="search" class="search-input" id="story-search" placeholder="Search stories, epics, notes…" aria-label="Search stories" autocomplete="off" />
+      <kbd class="search-kbd" aria-hidden="true">/</kbd>
+      <button type="button" class="search-clear" id="search-clear" aria-label="Clear search" hidden>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <div class="seg" id="view-seg" role="group" aria-label="View">
+      <button type="button" class="seg-btn" data-view="board" aria-pressed="true" onclick="setView('board')">Board</button>
+      <button type="button" class="seg-btn" data-view="dash" aria-pressed="false" onclick="setView('dash')">Dashboard</button>
+    </div>
+    <div class="seg" id="density-seg" role="group" aria-label="Board density">
+      <button type="button" class="seg-btn" data-density="comfortable" aria-pressed="true" onclick="setDensity('comfortable')">Comfortable</button>
+      <button type="button" class="seg-btn" data-density="compact" aria-pressed="false" onclick="setDensity('compact')">Compact</button>
+    </div>
+    <div class="seg" id="theme-seg" role="group" aria-label="Terminal palette">
+      <button type="button" class="seg-btn" data-theme-val="gruvbox" aria-pressed="true" onclick="setTheme('gruvbox')">gruvbox</button>
+      <button type="button" class="seg-btn" data-theme-val="amber" aria-pressed="false" onclick="setTheme('amber')">amber</button>
+      <button type="button" class="seg-btn" data-theme-val="green" aria-pressed="false" onclick="setTheme('green')">green</button>
+      <button type="button" class="seg-btn" data-theme-val="light" aria-pressed="false" onclick="setTheme('light')">light</button>
+      <button type="button" class="seg-btn" data-theme-val="mck" aria-pressed="false" onclick="setTheme('mck')">mck</button>
+    </div>
+    <button type="button" class="add-btn secondary-btn" id="boot-btn" onclick="runBoot()" title="Replay the boot sequence + weekly standup">▸ boot</button>
+  </div>
+
+  <div class="ai-bar" id="ai-bar">
+    <span class="ai-prompt" id="ai-prompt">storydeck@board:~$ ask ai ▸</span>
+    <input type="text" class="ai-input" id="ai-input" autocomplete="off" spellcheck="false"
+           placeholder="talk to the board — “add a story to fix the mobile nav, urgent” · “mark #12 done” · “how many WIP?”"
+           aria-label="Ask the AI assistant" />
+    <button type="button" class="ai-send" id="ai-send" onclick="aiSend()">send</button>
+    <button type="button" class="ai-status" id="ai-status" onclick="openAiKeyModal()"
+            title="AI provider — click to connect or switch a key" aria-label="AI provider status">· · ·</button>
+  </div>
+  <div class="ai-chat" id="ai-chat" role="log" aria-live="polite" hidden>
+    <div class="ai-chat-tools">
+      <button type="button" class="ai-chat-btn" id="ai-chat-clear" title="Clear conversation" onclick="aiClearChat()">clear</button>
+      <button type="button" class="ai-chat-btn ai-chat-close" id="ai-chat-close" title="Hide (Esc)" onclick="aiCloseChat()">✕</button>
+    </div>
+    <div class="ai-log" id="ai-log"></div>
+  </div>
+
+  <div class="filters" id="filter-bar"></div>
+  <div class="filters status-filters" id="status-filter-bar"></div>
+  <div id="task-list"></div>
+  <div id="dash-view"></div>
+
+  <div class="statusbar">
+    <span class="mode">NORMAL</span>
+    <div class="hints">
+      <span><kbd>/</kbd> search</span><span><kbd>a</kbd> ask ai</span><span><kbd>n</kbd> new</span><span><kbd>v</kbd> view</span><span><kbd>b</kbd> boot</span><span><kbd>?</kbd> help</span>
+    </div>
+    <span class="status-right" id="status-right"></span>
+    <button type="button" class="ver-badge" id="app-version" onclick="showVersionInfo()" title="Version" hidden></button>
+  </div>
+  <p class="legend"><b>tags</b> [TODO] [WIP] [BLKD] [DONE] &nbsp;·&nbsp; <b>!!</b> urgent &nbsp;·&nbsp; click <b>#dot</b> to toggle done &nbsp;·&nbsp; drag cards to reorder</p>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Add / edit story modal -->
+<div class="modal-overlay" id="modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <h2 id="modal-title">Add story</h2>
+    <label>Story</label>
+    <input type="text" id="new-task-text" placeholder="What story needs to move forward?" />
+    <label>Epic</label>
+    <div id="modal-epic-mount"></div>
+    <input type="text" id="new-task-project-custom" placeholder="New Epic name" style="display:none;margin-top:8px;" />
+    <label>Sprint points</label>
+    <input type="number" id="new-task-points" min="0" step="1" value="1" />
+    <label>Due date (optional)</label>
+    <input type="date" id="new-task-due" />
+    <label>Note (optional)</label>
+    <textarea id="new-task-note" rows="2" placeholder="Any context…"></textarea>
+    <label>Status</label>
+    <div class="seg-group" id="modal-status" role="group" aria-label="Story status">
+      <button type="button" class="seg-btn" data-state="todo" onclick="setModalState('todo')">TO DO</button>
+      <button type="button" class="seg-btn" data-state="in-progress" onclick="setModalState('in-progress')">IN PROGRESS</button>
+      <button type="button" class="seg-btn" data-state="blocked" onclick="setModalState('blocked')">BLOCKED</button>
+      <button type="button" class="seg-btn" data-state="done" onclick="setModalState('done')">DONE</button>
+    </div>
+    <button type="button" class="urgent-toggle" id="modal-urgent-btn" aria-pressed="false" onclick="toggleModalUrgent()">!! Mark as urgent</button>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeModal()">Cancel</button>
+      <button class="modal-save" id="modal-save-btn" onclick="saveNewTask()">Add story</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ai-key-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="ai-key-title">
+    <h2 id="ai-key-title">Connect an AI key</h2>
+    <p class="ai-key-note" id="ai-key-status">Checking current status…</p>
+    <label>Provider</label>
+    <div class="seg-group" id="ai-key-provider" role="group" aria-label="AI provider">
+      <button type="button" class="seg-btn" data-provider="openai" onclick="setAiKeyProvider('openai')">OpenAI</button>
+      <button type="button" class="seg-btn" data-provider="anthropic" onclick="setAiKeyProvider('anthropic')">Anthropic</button>
+      <button type="button" class="seg-btn" data-provider="cursor" onclick="setAiKeyProvider('cursor')">Cursor</button>
+    </div>
+    <label>API key</label>
+    <input type="password" id="ai-key-input" autocomplete="off" spellcheck="false" placeholder="sk-…  (stored on this device only, never uploaded)" />
+    <label>Model (optional)</label>
+    <input type="text" id="ai-key-model" autocomplete="off" spellcheck="false" placeholder="leave blank for the provider default" />
+    <p class="ai-key-err" id="ai-key-err" hidden></p>
+    <div class="modal-actions">
+      <button class="modal-cancel" onclick="closeAiKeyModal()">Cancel</button>
+      <button class="modal-save" id="ai-key-save-btn" onclick="saveAiKey()">Save key</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="mcp-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="mcp-title" style="width:620px">
+    <h2 id="mcp-title">Connect your AI to StoryDeck</h2>
+    <p class="mcp-intro">StoryDeck is the MCP server — your board stays on this Mac. Pick your AI app below and connect in one click. This is separate from the in-app <b>AI key</b> (built-in ask bar).</p>
+    <p class="mcp-status-line" id="mcp-status-line">Checking connection…</p>
+    <div class="mcp-grid" id="mcp-grid"></div>
+    <div class="mcp-manual" id="mcp-manual-block" hidden>
+      <label for="mcp-manual-json">Manual MCP config (paste into your agent’s settings)</label>
+      <textarea id="mcp-manual-json" readonly spellcheck="false"></textarea>
+      <div class="mcp-card-actions" style="margin-top:8px">
+        <button type="button" class="modal-save" onclick="copyMcpManual()">Copy JSON</button>
+      </div>
+    </div>
+    <p class="mcp-footnote" id="mcp-footnote">After connecting, restart your AI app once. Then ask: “list my StoryDeck stories”.</p>
+    <p class="ai-key-err" id="mcp-err" hidden></p>
+    <div class="modal-actions">
+      <button type="button" class="modal-cancel" onclick="testMcpConnection()">Test connection</button>
+      <button class="modal-cancel" onclick="closeMcpModal()">Close</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="help-modal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <h2 id="help-title">Keyboard shortcuts</h2>
+    <ul class="help-keys">
+      <li><kbd>/</kbd><span>Focus search</span></li>
+      <li><kbd>a</kbd><span>Focus the ask-AI bar</span></li>
+      <li><kbd>n</kbd><span>New story</span></li>
+      <li><kbd>v</kbd><span>Toggle board / dashboard</span></li>
+      <li><kbd>b</kbd><span>Replay the boot screen</span></li>
+      <li><kbd>?</kbd><span>Show this help</span></li>
+      <li><kbd>Esc</kbd><span>Close menus, dialogs &amp; this help</span></li>
+    </ul>
+    <div class="modal-actions">
+      <button class="modal-save" onclick="closeShortcutsHelp()">Got it</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── config / state ──────────────────────────────────────────────────────────
+const API = '';
+const DENSITY_KEY = 'storydeck-density';
+const DEFAULT_SPRINT_POINTS = 1;
+const UNASSIGNED_EPIC = 'Unassigned';
+// Default filter-button epics. Overridable per instance via BOARD_CORE_EPICS
+// (the private overlay sets its own); the public build ships neutral names.
+let CORE_EPICS = ['Website','Mobile','Marketing','Ops','Personal','GitHub'];
+
+let tasks = [];
+// Persist the UI scope so a refresh stays where you were (epic + status filter).
+const FILTER_KEY = 'storydeck-epic-filter';
+const STATUS_FILTER_KEY = 'storydeck-status-filter';
+function persist(key, val) { try { localStorage.setItem(key, val); } catch (e) {} }
+function restore(key, fallback) { try { return localStorage.getItem(key) || fallback; } catch (e) { return fallback; } }
+let activeFilter = restore(FILTER_KEY, 'All');
+let statusFilter = restore(STATUS_FILTER_KEY, 'all');
+let searchQuery = '';
+let density = 'comfortable';
+let editingNoteId = null;
+let editingStoryId = null;
+let creatingStoryState = 'todo';
+let modalEpicValue = UNASSIGNED_EPIC;
+
+// ── API client ────────────────────────────────────────────────────────────
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText }));
+    throw new Error(err.error || `Request failed (${res.status})`);
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+// ── version badge ───────────────────────────────────────────────────────────
+let versionData = null;
+
+function versionLines() {
+  if (!versionData) return 'Version unavailable';
+  const d = versionData;
+  const published = d.contentDate ? new Date(d.contentDate).toLocaleString() : '—';
+  return [
+    `StoryDeck v${d.appVersion} · ${d.channel}`,
+    `content v${d.contentVersion}${d.commit ? ' · ' + d.commit : ''}`,
+    `source: ${d.source === 'overlay' ? 'hot-updated (from GitHub)' : 'bundled with app'}`,
+    `published: ${published}`,
+  ].join('\n');
+}
+
+function showToast(msg, ms = 4000) {
+  const t = document.getElementById('toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.classList.remove('show'), ms);
+}
+
+function showVersionInfo() { showToast(versionLines(), 6000); }
+
+async function initVersion() {
+  try { versionData = await api('/api/version'); }
+  catch { return; }
+  if (!versionData) return;
+  const updated = versionData.source === 'overlay';
+  const label = `v${escHTML(versionData.appVersion)}${updated ? '<span class="up" title="running a hot update">&#9679;</span>' : ''}`;
+  const tip = versionLines().replace(/\n/g, ' · ');
+  for (const id of ['app-version', 'title-version']) {
+    const el = document.getElementById(id);
+    if (!el) continue;
+    el.innerHTML = label;
+    el.title = tip;
+    el.hidden = false;
+  }
+}
+
+function showConnError(msg) {
+  const b = document.getElementById('conn-banner');
+  b.textContent = msg;
+  b.classList.add('show');
+}
+function clearConnError() {
+  document.getElementById('conn-banner').classList.remove('show');
+}
+
+async function loadState() {
+  try {
+    const data = await api('/api/state');
+    tasks = data.stories || [];
+    if (data.title) {
+      document.title = data.title;
+      const titleEl = document.getElementById('board-title');
+      if (titleEl) titleEl.textContent = data.title;
+    }
+    if (Array.isArray(data.coreEpics) && data.coreEpics.length) CORE_EPICS = data.coreEpics;
+    applyBranding(data.user, data.title);
+    clearConnError();
+    render();
+    if (!bootShown) { bootShown = true; persist(BOOT_KEY, '1'); runBoot(); }
+  } catch (err) {
+    showConnError(`Can't reach the local board server. Start it with "node src/server.js" (or the launcher), then reload. [${err.message}]`);
+  }
+}
+
+function replaceLocal(story) {
+  const idx = tasks.findIndex(t => t.id === story.id);
+  if (idx >= 0) tasks[idx] = story; else tasks.push(story);
+}
+
+async function guard(fn) {
+  try { await fn(); clearConnError(); }
+  catch (err) { showConnError(`Action failed: ${err.message}`); await loadState(); }
+}
+
+// ── epics ─────────────────────────────────────────────────────────────────
+function normalizeEpic(value) { return (value || '').trim() || UNASSIGNED_EPIC; }
+
+function getProjects() {
+  const present = [...new Set(tasks.map(t => normalizeEpic(t.project)))];
+  return ['All', 'Urgent', UNASSIGNED_EPIC, ...CORE_EPICS, ...present.filter(p => ![UNASSIGNED_EPIC, ...CORE_EPICS].includes(p))];
+}
+function getEpics() { return getProjects().filter(p => p !== 'All' && p !== 'Urgent'); }
+
+// ── custom dropdown component ───────────────────────────────────────────────
+let openSelect = null;
+let typeBuffer = '';
+let typeTimer = null;
+
+const CHEVRON = `<svg class="cs-chevron" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>`;
+const CHECK = `<span class="cs-check" aria-hidden="true"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5L20 6"/></svg></span>`;
+
+// Returns HTML for a custom select. options: [{value,label,custom?}]
+function csSelectHTML({ id, value, options, block, title }) {
+  const selected = options.find(o => o.value === value) || options[0];
+  const opts = options.map(o =>
+    `<li class="cs-option${o.custom ? ' cs-custom' : ''}" role="option" data-value="${escAttr(o.value)}" aria-selected="${o.value === value}">${CHECK}<span class="cs-option-label">${escHTML(o.label)}</span></li>`
+  ).join('');
+  return `<div class="cs-select${block ? ' cs-block' : ''}" data-cs="${escAttr(id)}" data-value="${escAttr(value)}" data-open="false">
+    <button type="button" class="cs-trigger" role="combobox" aria-haspopup="listbox" aria-expanded="false" ${title ? `title="${escAttr(title)}"` : ''}>
+      <span class="cs-value">${escHTML(selected ? selected.label : '')}</span>${CHEVRON}
+    </button>
+    <ul class="cs-panel" role="listbox" tabindex="-1" hidden>${opts}</ul>
+  </div>`;
+}
+
+function epicSelectOptions(selectedEpic) {
+  const sel = normalizeEpic(selectedEpic);
+  const list = getEpics().map(e => ({ value: e, label: e }));
+  if (!list.some(o => o.value === sel)) list.unshift({ value: sel, label: sel });
+  list.push({ value: '__custom__', label: '+ New Epic…', custom: true });
+  return list;
+}
+
+function closeAllSelects() {
+  document.querySelectorAll('.cs-select[data-open="true"]').forEach(el => {
+    el.dataset.open = 'false';
+    el.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
+    const panel = el.querySelector('.cs-panel');
+    if (panel) panel.hidden = true;
+  });
+  openSelect = null;
+}
+
+function openSelectEl(el) {
+  closeAllSelects();
+  el.dataset.open = 'true';
+  el.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'true');
+  const panel = el.querySelector('.cs-panel');
+  panel.hidden = false;
+  openSelect = el;
+  const current = panel.querySelector('.cs-option[aria-selected="true"]') || panel.querySelector('.cs-option');
+  setActiveOption(panel, current);
+  current?.scrollIntoView({ block: 'nearest' });
+  panel.focus();
+}
+
+function setActiveOption(panel, opt) {
+  panel.querySelectorAll('.cs-option.cs-active').forEach(o => o.classList.remove('cs-active'));
+  if (opt) opt.classList.add('cs-active');
+}
+
+function commitOption(el, opt) {
+  const value = opt.dataset.value;
+  const id = el.dataset.cs;
+  closeAllSelects();
+  if (id === 'modal-epic') onModalEpicChange(value);
+  else if (id.startsWith('card-epic-')) setEpic(Number.parseInt(id.replace('card-epic-', ''), 10), value);
+}
+
+document.addEventListener('click', (e) => {
+  const trigger = e.target.closest('.cs-trigger');
+  if (trigger) {
+    const el = trigger.closest('.cs-select');
+    if (el.dataset.open === 'true') closeAllSelects();
+    else openSelectEl(el);
+    return;
+  }
+  const option = e.target.closest('.cs-option');
+  if (option) {
+    const el = option.closest('.cs-select');
+    commitOption(el, option);
+    return;
+  }
+  if (!e.target.closest('.cs-select')) closeAllSelects();
+});
+
+document.addEventListener('keydown', (e) => {
+  if (!openSelect) return;
+  const panel = openSelect.querySelector('.cs-panel');
+  const options = [...panel.querySelectorAll('.cs-option')];
+  const activeIdx = options.findIndex(o => o.classList.contains('cs-active'));
+  if (e.key === 'ArrowDown') { e.preventDefault(); setActiveOption(panel, options[Math.min(options.length - 1, activeIdx + 1)]); scrollActive(panel); }
+  else if (e.key === 'ArrowUp') { e.preventDefault(); setActiveOption(panel, options[Math.max(0, activeIdx - 1)]); scrollActive(panel); }
+  else if (e.key === 'Home') { e.preventDefault(); setActiveOption(panel, options[0]); scrollActive(panel); }
+  else if (e.key === 'End') { e.preventDefault(); setActiveOption(panel, options[options.length - 1]); scrollActive(panel); }
+  else if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); const a = options[activeIdx]; if (a) commitOption(openSelect, a); }
+  else if (e.key === 'Escape') { e.preventDefault(); const el = openSelect; closeAllSelects(); el.querySelector('.cs-trigger')?.focus(); }
+  else if (e.key.length === 1) {
+    typeBuffer += e.key.toLowerCase();
+    clearTimeout(typeTimer);
+    typeTimer = setTimeout(() => { typeBuffer = ''; }, 600);
+    const match = options.find(o => o.textContent.trim().toLowerCase().startsWith(typeBuffer));
+    if (match) { setActiveOption(panel, match); scrollActive(panel); }
+  }
+});
+
+function scrollActive(panel) {
+  panel.querySelector('.cs-option.cs-active')?.scrollIntoView({ block: 'nearest' });
+}
+
+// ── filters + search ────────────────────────────────────────────────────────
+function renderFilters() {
+  const bar = document.getElementById('filter-bar');
+  bar.innerHTML = '';
+  const lead = document.createElement('span');
+  lead.className = 'filter-lead';
+  lead.textContent = 'epic:';
+  bar.appendChild(lead);
+  getProjects().forEach(p => {
+    const b = document.createElement('button');
+    b.className = 'filter-btn' + (p === activeFilter ? ' active' : '');
+    const count = p === 'All' ? tasks.filter(t => t.status !== 'done').length
+                : p === 'Urgent' ? tasks.filter(t => t.urgent && t.status !== 'done').length
+                : tasks.filter(t => normalizeEpic(t.project) === p && t.status !== 'done').length;
+    b.textContent = p + (count > 0 ? ` ${count}` : '');
+    b.onclick = () => { activeFilter = p; render(); };
+    bar.appendChild(b);
+  });
+}
+
+// Status prefilters: quickly scope the board/list to one sprint state.
+function renderStatusFilters() {
+  const bar = document.getElementById('status-filter-bar');
+  if (!bar) return;
+  bar.innerHTML = '';
+  const lead = document.createElement('span');
+  lead.className = 'filter-lead';
+  lead.textContent = 'status:';
+  bar.appendChild(lead);
+
+  const epicScope = activeFilter === 'All' ? tasks
+    : activeFilter === 'Urgent' ? tasks.filter(t => t.urgent && t.status !== 'done')
+    : tasks.filter(t => normalizeEpic(t.project) === activeFilter);
+  const scope = epicScope.filter(matchesSearch);
+
+  // If "due soon" was active but nothing qualifies anymore, fall back to ALL so
+  // the selection can't get stuck on a filter with no visible button.
+  if (statusFilter === 'due-soon' && !scope.some(isDueSoon)) statusFilter = 'all';
+
+  const opts = [{ key: 'all', label: 'ALL' }].concat(
+    SPRINT_COLUMNS.map(c => ({ key: c.key, label: STATE_TAG[c.key] }))
+  );
+  // Cross-status "due soon" filter — only offered when there are open deadlines.
+  if (scope.some(isDueSoon)) opts.push({ key: 'due-soon', label: 'DUE' });
+  opts.forEach(o => {
+    const b = document.createElement('button');
+    b.className = 'filter-btn' + (o.key === statusFilter ? ' active' : '');
+    const count = o.key === 'all' ? scope.length
+      : o.key === 'due-soon' ? scope.filter(isDueSoon).length
+      : scope.filter(t => getSprintState(t) === o.key).length;
+    b.textContent = o.label + (o.key !== 'all' || count > 0 ? ` ${count}` : '');
+    b.onclick = () => { statusFilter = o.key; render(); };
+    bar.appendChild(b);
+  });
+}
+
+function matchesSearch(t) {
+  if (!searchQuery) return true;
+  const q = searchQuery.toLowerCase();
+  const hay = [
+    t.task || '',
+    normalizeEpic(t.project),
+    t.note || '',
+    ...(Array.isArray(t.comments) ? t.comments.map(c => c.text || '') : []),
+  ].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function applySearch(value) {
+  searchQuery = value.trim();
+  const wrap = document.getElementById('search-wrap');
+  const clear = document.getElementById('search-clear');
+  wrap.dataset.filled = value.length > 0 ? 'true' : 'false';
+  clear.hidden = value.length === 0;
+  render();
+}
+
+// ── mutations (API-backed) ──────────────────────────────────────────────────
+function statePatch(state) {
+  if (state === 'done') return { status: 'done' };
+  return { status: 'pending', workStatus: state === 'todo' ? null : state };
+}
+
+function setSprintState(id, state) {
+  guard(async () => {
+    const data = await api(`/api/stories/${id}`, { method: 'PATCH', body: JSON.stringify(statePatch(state)) });
+    replaceLocal(data.story); render();
+  });
+}
+
+// ── quick status picker: click a [TAG] anywhere to move a story ──────────────
+let statusMenuEl = null;
+function closeStatusMenu() {
+  if (!statusMenuEl) return;
+  statusMenuEl.remove();
+  statusMenuEl = null;
+  document.removeEventListener('click', onDocClickStatus, true);
+  window.removeEventListener('scroll', closeStatusMenu, true);
+}
+function onDocClickStatus(e) {
+  if (statusMenuEl && !statusMenuEl.contains(e.target)) closeStatusMenu();
+}
+function openStatusMenu(ev, id) {
+  ev.preventDefault();
+  ev.stopPropagation();
+  closeStatusMenu();
+  const t = tasks.find(x => x.id === id);
+  const cur = t ? getSprintState(t) : 'todo';
+  statusMenuEl = document.createElement('div');
+  statusMenuEl.className = 'status-menu';
+  statusMenuEl.innerHTML =
+    `<div class="status-menu-head">#${id} · move to</div>` +
+    SPRINT_COLUMNS.map(c =>
+      `<button type="button" class="status-menu-item${c.key === cur ? ' current' : ''}" onclick="pickStatus(event, ${id}, '${c.key}')">`
+      + `<span class="tag tag-${c.key}">${STATE_TAG[c.key]}</span><span class="smi-label">${c.label}</span>`
+      + `${c.key === cur ? '<span class="smi-cur">●</span>' : ''}</button>`
+    ).join('');
+  document.body.appendChild(statusMenuEl);
+
+  const r = statusMenuEl.getBoundingClientRect();
+  const pad = 6;
+  let x = ev.clientX;
+  let y = ev.clientY + 8;
+  if (x + r.width + pad > window.innerWidth) x = window.innerWidth - r.width - pad;
+  if (y + r.height + pad > window.innerHeight) y = ev.clientY - r.height - 8;
+  statusMenuEl.style.left = Math.max(pad, x) + 'px';
+  statusMenuEl.style.top = Math.max(pad, y) + 'px';
+
+  setTimeout(() => {
+    document.addEventListener('click', onDocClickStatus, true);
+    window.addEventListener('scroll', closeStatusMenu, true);
+  }, 0);
+}
+function pickStatus(ev, id, state) {
+  ev.stopPropagation();
+  closeStatusMenu();
+  setSprintState(id, state);
+}
+// Enter/Space on a focused status tag opens the picker.
+document.addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const tag = e.target?.classList?.contains('tag-btn') ? e.target : null;
+  if (tag) { e.preventDefault(); tag.click(); }
+});
+
+function setEpic(id, epic) {
+  let next = epic;
+  if (epic === '__custom__') {
+    const t = tasks.find(x => x.id === id);
+    next = window.prompt('New Epic name', t?.project || 'New Epic');
+    if (next === null) { render(); return; }
+  }
+  const normalized = normalizeEpic(next);
+  guard(async () => {
+    const data = await api(`/api/stories/${id}`, { method: 'PATCH', body: JSON.stringify({ project: normalized === UNASSIGNED_EPIC ? '' : normalized }) });
+    replaceLocal(data.story); render();
+  });
+}
+
+function deleteStory(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  if (!window.confirm(`Delete story #${id}: ${t.task}?`)) return;
+  guard(async () => {
+    await api(`/api/stories/${id}`, { method: 'DELETE' });
+    tasks = tasks.filter(x => x.id !== id);
+    if (editingNoteId === id) editingNoteId = null;
+    render();
+  });
+}
+
+function saveNote(id) {
+  const ta = document.getElementById('note-ta-' + id);
+  if (!ta) return;
+  const value = ta.value.trim();
+  guard(async () => {
+    const data = await api(`/api/stories/${id}`, { method: 'PATCH', body: JSON.stringify({ note: value }) });
+    replaceLocal(data.story);
+    editingNoteId = null;
+    render();
+  });
+}
+
+function startEditNote(id) {
+  editingNoteId = id;
+  render();
+  setTimeout(() => { const ta = document.getElementById('note-ta-' + id); if (ta) { ta.focus(); ta.select(); } }, 40);
+}
+function cancelNote() { editingNoteId = null; render(); }
+
+function addComment(id) {
+  const input = document.getElementById('comment-input-' + id);
+  if (!input) return;
+  const text = input.value.trim();
+  if (!text) return;
+  guard(async () => {
+    const data = await api('/api/comments', { method: 'POST', body: JSON.stringify({ storyId: id, text }) });
+    replaceLocal(data.story); render();
+  });
+}
+function handleCommentKeydown(event, id) {
+  if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); addComment(id); }
+}
+
+function reorderStory(id, state, orderedIds) {
+  guard(async () => {
+    await api(`/api/stories/${id}`, { method: 'PATCH', body: JSON.stringify(statePatch(state)) });
+    const data = await api('/api/stories/reorder', { method: 'POST', body: JSON.stringify({ orderedIds }) });
+    tasks = data.stories;
+    render();
+  });
+}
+
+// ── drag & drop ─────────────────────────────────────────────────────────────
+function handleDragStart(event, id) {
+  event.dataTransfer.effectAllowed = 'move';
+  event.dataTransfer.setData('text/plain', String(id));
+  event.currentTarget.classList.add('dragging');
+}
+function handleDragEnd(event) { event.currentTarget.classList.remove('dragging'); clearDragOverState(); }
+function handleDragOver(event) {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = 'move';
+  const columnBody = event.currentTarget;
+  columnBody.classList.add('drag-over');
+  const dragging = document.querySelector('.task-card.dragging');
+  if (!dragging) return;
+  const after = getDropTargetAfterElement(columnBody, event.clientY);
+  if (after) columnBody.insertBefore(dragging, after); else columnBody.appendChild(dragging);
+}
+function handleDragLeave(event) { if (!event.currentTarget.contains(event.relatedTarget)) event.currentTarget.classList.remove('drag-over'); }
+function handleDrop(event, state) {
+  event.preventDefault();
+  event.currentTarget.classList.remove('drag-over');
+  const id = Number.parseInt(event.dataTransfer.getData('text/plain'), 10);
+  if (Number.isNaN(id)) return;
+  const orderedIds = [...event.currentTarget.querySelectorAll('.task-card')].map(c => Number.parseInt(c.id.replace('card-', ''), 10)).filter(Number.isFinite);
+  reorderStory(id, state, orderedIds);
+}
+function clearDragOverState() { document.querySelectorAll?.('.column-body.drag-over').forEach(el => el.classList.remove('drag-over')); }
+function getDropTargetAfterElement(container, y) {
+  const cards = [...container.querySelectorAll('.task-card:not(.dragging)')];
+  return cards.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if (offset < 0 && offset > closest.offset) return { offset, element: child };
+    return closest;
+  }, { offset: Number.NEGATIVE_INFINITY, element: null }).element;
+}
+
+// ── render ─────────────────────────────────────────────────────────────────
+const SPRINT_COLUMNS = [
+  { key: 'todo', label: 'To Do' },
+  { key: 'in-progress', label: 'In Progress' },
+  { key: 'blocked', label: 'Blocked' },
+  { key: 'done', label: 'Done' },
+];
+function getSprintState(t) {
+  if (t.status === 'done') return 'done';
+  if (t.workStatus === 'blocked') return 'blocked';
+  if (t.workStatus === 'in-progress') return 'in-progress';
+  return 'todo';
+}
+const STATE_TAG = { 'todo': 'TODO', 'in-progress': 'WIP', 'blocked': 'BLKD', 'done': 'DONE' };
+function sprintStateLabel(key) { return SPRINT_COLUMNS.find(c => c.key === key)?.label || 'To Do'; }
+function formatPoints(value) { const n = Number.parseInt(value, 10); return Number.isFinite(n) && n >= 0 ? n : DEFAULT_SPRINT_POINTS; }
+
+// Due-date urgency for a story. Returns null when there's no due date or the
+// story is done (a shipped story's deadline is moot). Otherwise a class +
+// short human label: overdue, today/tomorrow/Nd for the near term, else a date.
+function dueInfo(t) {
+  if (!t || !t.due || t.status === 'done') return null;
+  const d = new Date(t.due + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return null;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const days = Math.round((d - today) / 86400000);
+  if (days < 0) return { cls: 'due-over', label: `${Math.abs(days)}d late` };
+  if (days === 0) return { cls: 'due-soon', label: 'today' };
+  if (days === 1) return { cls: 'due-soon', label: 'tomorrow' };
+  if (days <= 3) return { cls: 'due-soon', label: `${days}d` };
+  return { cls: 'due-ok', label: d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' }) };
+}
+function dueChip(t) {
+  const info = dueInfo(t);
+  return info ? `<span class="due-chip ${info.cls}" title="Due ${t.due}">due ${info.label}</span>` : '';
+}
+// "Due soon" = an open story that is overdue or due within the next 7 days.
+function isDueSoon(t) {
+  if (!t || !t.due || t.status === 'done') return false;
+  const d = new Date(t.due + 'T00:00:00');
+  if (Number.isNaN(d.getTime())) return false;
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  return Math.round((d - today) / 86400000) <= 7; // negatives = overdue, included
+}
+
+function badgeHTML(t) {
+  const bits = [];
+  if (t.urgent && t.status !== 'done') bits.push(`<span class="badge badge-red">Urgent</span>`);
+  return bits.join('');
+}
+
+function renderCard(t) {
+  const isDone = t.status === 'done';
+  const state = getSprintState(t);
+  const ws = state === 'todo' || state === 'done' ? null : state;
+  const dotClass = isDone ? 'done' : (ws === 'in-progress' ? 'in-progress' : ws === 'blocked' ? 'blocked' : (t.urgent ? 'urgent-dot' : ''));
+  const cardClass = (t.urgent && !isDone ? ' urgent' : '') + (isDone ? ' done-card' : '');
+  const epicSelect = csSelectHTML({
+    id: `card-epic-${t.id}`,
+    value: normalizeEpic(t.project),
+    options: epicSelectOptions(t.project),
+    title: 'Change epic',
+  });
+
+  let noteInner;
+  if (editingNoteId === t.id) {
+    noteInner = `<div class="note-panel"><div class="note-kicker">Story notes</div><div class="note-edit">
+        <textarea id="note-ta-${t.id}" placeholder="Add a note…">${escHTML(t.note || '')}</textarea>
+        <div class="note-edit-btns">
+          <button class="save-note-btn" onclick="saveNote(${t.id})">Save</button>
+          <button class="cancel-note-btn" onclick="cancelNote()">Cancel</button>
+        </div></div></div>`;
+  } else {
+    const noteText = t.note ? linkify(t.note) : 'Add note';
+    noteInner = `<div class="note-panel"><div class="note-kicker">Story notes</div>
+      <div class="note-display${t.note ? '' : ' empty'}" onclick="startEditNote(${t.id})" title="Click to edit">${noteText}</div></div>`;
+  }
+  const noteHTML = `<details class="panel-collapse${t.note ? ' has-content' : ''}"><summary>Notes${t.note ? ' <span class="sum-dot" title="Has a note"></span>' : ''}</summary><div class="panel-body">${noteInner}</div></details>`;
+
+  const comments = Array.isArray(t.comments) ? t.comments : [];
+  const commentsInner = `<div class="comments-panel"><div class="note-kicker">Comments</div>
+    ${comments.length ? `<div class="comment-list">${comments.map(c => `<div class="comment-item">${c.created ? `<span class="comment-meta">${escHTML(c.created)}</span>` : ''}${linkify(c.text)}</div>`).join('')}</div>` : ''}
+    <div class="comment-composer">
+      <textarea class="comment-input" id="comment-input-${t.id}" placeholder="Add a comment…" draggable="false" onkeydown="handleCommentKeydown(event, ${t.id})"></textarea>
+      <button class="comment-btn" onclick="addComment(${t.id})">Add</button>
+    </div></div>`;
+  const commentsHTML = `<details class="panel-collapse${comments.length ? ' has-content' : ''}"><summary>Comments${comments.length ? ` (${comments.length})` : ''}</summary><div class="panel-body">${commentsInner}</div></details>`;
+
+  const actionsHTML = SPRINT_COLUMNS
+    .filter(col => col.key !== state)
+    .map(col => `<button class="action-btn ${col.key === 'done' ? 'done-btn' : col.key === 'in-progress' ? 'progress-btn' : col.key === 'blocked' ? 'blocked-btn' : ''}" onclick="setSprintState(${t.id},'${col.key}')">${col.label}</button>`)
+    .join('') + `<button class="action-btn" onclick="openEditStory(${t.id})">Edit</button><button class="action-btn delete-btn" onclick="deleteStory(${t.id})">Delete</button>`;
+
+  const noteChip = t.note ? `<span class="mark mark-note" title="Has a note — hover to read">note</span>` : '';
+  const commentChip = comments.length ? `<span class="mark mark-comment" title="${comments.length} comment${comments.length > 1 ? 's' : ''} — hover to read">${comments.length} cmt</span>` : '';
+  const counts = noteChip + commentChip;
+
+  return `<div class="task-card${cardClass}" id="card-${t.id}" draggable="true" ondragstart="handleDragStart(event, ${t.id})" ondragend="handleDragEnd(event)">
+    <div class="card-meta">
+      <span class="task-number">#${t.id}</span>
+      <span class="tag tag-${state} tag-btn" role="button" tabindex="0" onclick="event.stopPropagation(); openStatusMenu(event, ${t.id})" title="Change status">${STATE_TAG[state]}</span>
+      ${t.urgent && !isDone ? '<span class="bang" title="Urgent">!!</span>' : ''}
+      <span class="meta-spacer"></span>
+      ${dueChip(t)}
+      <span class="pts">${formatPoints(t.points)} pts</span>
+      <div class="status-dot ${dotClass}" onclick="setSprintState(${t.id}, '${isDone ? 'todo' : 'done'}')" title="${isDone ? 'Move to To Do' : 'Move to Done'}"></div>
+    </div>
+    <div class="task-text editable${isDone ? ' crossed' : ''}" onclick="openEditStory(${t.id})" title="Click to edit story">${escHTML(t.task)}</div>
+    <hr class="card-sep">
+    <div class="card-foot">
+      ${epicSelect}
+      <span class="counts">${counts}</span>
+    </div>
+    <div class="task-actions">${actionsHTML || '<span class="status-label done-label">Done</span>'}</div>
+    ${noteHTML}
+    ${commentsHTML}
+  </div>`;
+}
+
+// Compact = the preview's flat list view: one table across all stories.
+function renderList(rows) {
+  const order = { blocked: 0, 'in-progress': 1, todo: 2, done: 3 };
+  const sorted = rows.slice().sort((a, b) =>
+    (order[getSprintState(a)] - order[getSprintState(b)]) ||
+    ((b.urgent ? 1 : 0) - (a.urgent ? 1 : 0)) ||
+    (formatPoints(b.points) - formatPoints(a.points)));
+  const body = sorted.map(t => {
+    const st = getSprintState(t);
+    const isDone = t.status === 'done';
+    return `<div class="list-row ${st}${isDone ? ' done' : ''}" onclick="openEditStory(${t.id})" title="Click to edit story">
+      <span class="lr-id">#${t.id}</span>
+      <span><span class="tag tag-${st} tag-btn" role="button" tabindex="0" onclick="openStatusMenu(event, ${t.id})" title="Change status">${STATE_TAG[st]}</span></span>
+      <span class="lr-urg">${t.urgent && !isDone ? '!!' : ''}</span>
+      <span class="lr-title"><span>${escHTML(t.task)}</span>${dueChip(t)}<span class="leader"> …</span></span>
+      <span class="lr-epic">${escHTML(normalizeEpic(t.project))}</span>
+      <span class="lr-pts">${formatPoints(t.points)} pts</span>
+    </div>`;
+  }).join('');
+  return `<div class="story-list">
+    <div class="list-head"><span>id</span><span>status</span><span>!</span><span>story</span><span>epic</span><span>pts</span></div>
+    <div class="list-body">${body || `<div class="empty-state">${searchQuery ? 'No matches' : 'No stories'}</div>`}</div>
+  </div>`;
+}
+
+function render() {
+  renderFilters();
+  renderStatusFilters();
+  // Remember the current scope (after any guard reset) so a refresh restores it.
+  persist(FILTER_KEY, activeFilter);
+  persist(STATUS_FILTER_KEY, statusFilter);
+
+  const base = activeFilter === 'All' ? tasks
+    : activeFilter === 'Urgent' ? tasks.filter(t => t.urgent && t.status !== 'done')
+    : tasks.filter(t => normalizeEpic(t.project) === activeFilter);
+  const visibleTasks = base.filter(matchesSearch);
+  const statusTasks = statusFilter === 'all'
+    ? visibleTasks
+    : statusFilter === 'due-soon'
+    ? visibleTasks.filter(isDueSoon)
+    : visibleTasks.filter(t => getSprintState(t) === statusFilter);
+  // 'due-soon' spans columns, so keep all columns; only a real state isolates one.
+  const columns = (statusFilter === 'all' || statusFilter === 'due-soon')
+    ? SPRINT_COLUMNS
+    : SPRINT_COLUMNS.filter(c => c.key === statusFilter);
+
+  const html = density === 'compact' ? renderList(statusTasks) : `<div class="sprint-board${columns.length === 1 ? ' single' : ''}">
+    ${columns.map(col => {
+      const columnStories = statusTasks.filter(t => getSprintState(t) === col.key);
+      const points = columnStories.reduce((sum, t) => sum + formatPoints(t.points), 0);
+      const cards = columnStories.map(renderCard).join('');
+      return `<section class="sprint-column">
+        <div class="column-header">
+          <div class="column-title ${col.key}">${col.label}</div>
+          <div class="column-tools">
+            <div class="column-count">[ ${columnStories.length} · ${points} pts ]</div>
+            <button class="column-add-btn" onclick="openModal('${col.key}')">+ story</button>
+          </div>
+        </div>
+        <div class="column-body" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event, '${col.key}')">
+          ${cards || `<div class="empty-state">${searchQuery ? 'No matches' : 'No stories'}</div>`}
+        </div>
+      </section>`;
+    }).join('')}
+  </div>`;
+
+  document.getElementById('task-list').innerHTML = html;
+
+  const pending = tasks.filter(t => t.status !== 'done').length;
+  const done = tasks.filter(t => t.status === 'done').length;
+  const openPoints = tasks.filter(t => t.status !== 'done').reduce((sum, t) => sum + formatPoints(t.points), 0);
+  const today = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+  document.getElementById('meta-line').textContent = `${pending} open stories · ${done} done · ${openPoints} SP open · ${today}`;
+
+  const statusRight = document.getElementById('status-right');
+  if (statusRight) {
+    const vOpenPts = visibleTasks.filter(t => t.status !== 'done').reduce((sum, t) => sum + formatPoints(t.points), 0);
+    const vBlocked = visibleTasks.filter(t => getSprintState(t) === 'blocked').length;
+    statusRight.innerHTML = `epic=<b>${escHTML(activeFilter)}</b> · <b>${visibleTasks.length}</b> stories · <b>${vOpenPts}</b> open pts · <b>${vBlocked}</b> blocked`;
+  }
+
+  renderDash(visibleTasks);
+}
+
+// ── theme (gruvbox / amber / green / light) ─────────────────────────────────
+const THEME_KEY = 'storydeck-theme';
+function setTheme(name) {
+  const theme = ['gruvbox', 'amber', 'green', 'light', 'mck'].includes(name) ? name : 'gruvbox';
+  if (document.documentElement) document.documentElement.dataset.theme = theme;
+  try { localStorage.setItem(THEME_KEY, theme); } catch (e) {}
+  document.querySelectorAll('#theme-seg .seg-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.themeVal === theme ? 'true' : 'false'));
+}
+function initTheme() {
+  let stored = 'gruvbox';
+  try { stored = localStorage.getItem(THEME_KEY) || 'gruvbox'; } catch (e) {}
+  setTheme(stored);
+}
+
+// Apply per-instance branding: the terminal shell prompt (header + ask bar) and
+// the boot subtitle. Generic by default; a private instance sets BOARD_USER.
+// Per-instance branding, resolved from /api/state. Generic public defaults; a
+// private overlay sets BOARD_USER/BOARD_TITLE. Reused by the boot banner and the
+// backup filename so no personal identity is baked into the public build.
+let boardUser = 'storydeck';
+let boardTitle = 'StoryDeck';
+function applyBranding(user, title) {
+  const u = String(user || 'storydeck').trim() || 'storydeck';
+  boardUser = u;
+  if (title) boardTitle = title;
+  const prompt = `${u}@board:~$ `;
+  if (document.documentElement) {
+    document.documentElement.style.setProperty('--shell-prompt', JSON.stringify(prompt));
+  }
+  const aiPrompt = document.getElementById('ai-prompt');
+  if (aiPrompt) aiPrompt.textContent = `${prompt}ask ai ▸`;
+  const bootSub = document.getElementById('boot-sub');
+  if (bootSub && title) bootSub.textContent = `${title.toLowerCase()}  ·  local-first sprint deck  ·  on-device only`;
+}
+// Filesystem-safe slug of the board title for download filenames.
+function boardSlug() {
+  return (boardTitle || 'storydeck').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '') || 'storydeck';
+}
+
+// ── AI key settings (bring your own key) ────────────────────────────────────
+let aiKeyProvider = 'openai';
+function setAiKeyProvider(p) {
+  aiKeyProvider = ['openai', 'anthropic', 'cursor'].includes(p) ? p : 'openai';
+  document.querySelectorAll('#ai-key-provider .seg-btn').forEach(b =>
+    b.setAttribute('aria-pressed', b.dataset.provider === aiKeyProvider ? 'true' : 'false'));
+}
+async function refreshAiKeyStatus() {
+  const el = document.getElementById('ai-key-status');
+  try {
+    const res = await fetch(API + '/api/ai/health');
+    const h = await res.json();
+    if (h.enabled) {
+      el.innerHTML = `Active: <b>${escHTML(h.provider)}</b> · model <b>${escHTML(h.model || 'default')}</b>. Save a new key to switch or update.`;
+      setAiKeyProvider(h.provider);
+    } else {
+      const present = Object.entries(h.keysPresent || {}).filter(([, v]) => v).map(([k]) => k);
+      el.innerHTML = present.length
+        ? `Key present for <b>${present.map(escHTML).join(', ')}</b> but AI is off — save a valid key to enable.`
+        : 'No AI key connected yet. Paste one below — it stays on this device.';
+    }
+  } catch (e) {
+    el.textContent = 'Could not read AI status.';
+  }
+}
+// Reflect the active AI provider/model in the ask-bar chip (never shows the key).
+async function refreshAiStatusBadge() {
+  const el = document.getElementById('ai-status');
+  if (!el) return;
+  try {
+    const res = await fetch(API + '/api/ai/health');
+    const h = await res.json();
+    el.classList.remove('ai-on', 'ai-off');
+    if (h.enabled) {
+      el.classList.add('ai-on');
+      el.textContent = h.model && h.model !== 'default' ? `${h.provider} · ${h.model}` : h.provider;
+      el.title = `AI: ${h.provider} (model ${h.model || 'default'}) — click to switch key`;
+    } else {
+      const hasKey = Object.values(h.keysPresent || {}).some(Boolean);
+      el.classList.add('ai-off');
+      el.textContent = hasKey ? 'ai off' : '+ connect ai';
+      el.title = hasKey ? 'A key is present but AI is off — click to fix' : 'No AI key connected — click to add one';
+    }
+  } catch (e) {
+    el.classList.remove('ai-on');
+    el.classList.add('ai-off');
+    el.textContent = 'ai —';
+    el.title = 'Could not read AI status';
+  }
+}
+function openAiKeyModal() {
+  const err = document.getElementById('ai-key-err');
+  if (err) { err.hidden = true; err.textContent = ''; }
+  document.getElementById('ai-key-input').value = '';
+  document.getElementById('ai-key-model').value = '';
+  setAiKeyProvider(aiKeyProvider);
+  refreshAiKeyStatus();
+  document.getElementById('ai-key-modal').classList.add('open');
+  setTimeout(() => document.getElementById('ai-key-input').focus(), 40);
+}
+function closeAiKeyModal() {
+  document.getElementById('ai-key-modal').classList.remove('open');
+}
+async function saveAiKey() {
+  const err = document.getElementById('ai-key-err');
+  const btn = document.getElementById('ai-key-save-btn');
+  const apiKey = document.getElementById('ai-key-input').value.trim();
+  const model = document.getElementById('ai-key-model').value.trim();
+  err.hidden = true; err.textContent = '';
+  if (!apiKey) { err.hidden = false; err.textContent = 'Please paste an API key.'; return; }
+  btn.disabled = true; btn.textContent = 'Saving…';
+  try {
+    const res = await fetch(API + '/api/ai/key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ provider: aiKeyProvider, apiKey, model }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not save the key.');
+    await refreshAiKeyStatus();
+    refreshAiStatusBadge();
+    closeAiKeyModal();
+  } catch (e) {
+    err.hidden = false; err.textContent = e.message;
+  } finally {
+    btn.disabled = false; btn.textContent = 'Save key';
+  }
+}
+
+// ── Universal MCP connector (external AI harnesses) ─────────────────────────
+function mcpStatusLabel(status) {
+  const map = {
+    connected: 'Connected',
+    available: 'Ready to connect',
+    not_installed: 'Not installed',
+    manual: 'Copy config',
+    unsupported_platform: 'Unsupported here',
+  };
+  return map[status] || status;
+}
+
+function renderMcpHarnesses(data) {
+  const grid = document.getElementById('mcp-grid');
+  const statusLine = document.getElementById('mcp-status-line');
+  const manualBlock = document.getElementById('mcp-manual-block');
+  if (!grid || !data) return;
+  const runtime = data.runtimeOk ? 'StoryDeck running' : 'StoryDeck runtime not ready — keep this app open';
+  statusLine.textContent = `${runtime} · platform ${data.platform}`;
+  grid.innerHTML = '';
+  for (const h of data.harnesses || []) {
+    if (h.manual) continue;
+    const card = document.createElement('div');
+    card.className = 'mcp-card';
+    const badgeClass = h.status === 'connected' ? 'connected' : (h.status === 'available' ? 'available' : 'not_installed');
+    card.innerHTML = `
+      <h3>${escHTML(h.name)}</h3>
+      <span class="mcp-badge ${badgeClass}">${escHTML(mcpStatusLabel(h.status))}</span>
+      <p>${escHTML(h.blurb || '')}</p>
+      <div class="mcp-card-actions"></div>`;
+    const actions = card.querySelector('.mcp-card-actions');
+    if (h.status === 'connected') {
+      const ok = document.createElement('span');
+      ok.className = 'mcp-badge connected';
+      ok.textContent = '✓ Configured';
+      actions.appendChild(ok);
+    } else if (h.status === 'available') {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'modal-save';
+      btn.textContent = 'Connect';
+      btn.onclick = () => connectMcpHarness(h.id);
+      actions.appendChild(btn);
+    } else if (h.status === 'not_installed') {
+      const span = document.createElement('span');
+      span.className = 'mcp-footnote';
+      span.textContent = 'Install the app first';
+      actions.appendChild(span);
+    }
+    grid.appendChild(card);
+  }
+  const manual = (data.harnesses || []).find((h) => h.manual);
+  if (manualBlock) {
+    manualBlock.hidden = false;
+    const ta = document.getElementById('mcp-manual-json');
+    if (ta && data.serverEntry) {
+      ta.value = JSON.stringify({ mcpServers: { storydeck: data.serverEntry } }, null, 2);
+    }
+  }
+}
+
+async function refreshMcpModal() {
+  const err = document.getElementById('mcp-err');
+  if (err) { err.hidden = true; err.textContent = ''; }
+  try {
+    const data = await api('/api/mcp/harnesses');
+    renderMcpHarnesses(data);
+  } catch (e) {
+    if (err) { err.hidden = false; err.textContent = e.message; }
+  }
+}
+
+function openMcpModal() {
+  document.getElementById('mcp-modal').classList.add('open');
+  refreshMcpModal();
+}
+function closeMcpModal() {
+  document.getElementById('mcp-modal').classList.remove('open');
+}
+
+async function connectMcpHarness(harnessId) {
+  const err = document.getElementById('mcp-err');
+  err.hidden = true; err.textContent = '';
+  try {
+    const data = await api('/api/mcp/connect', {
+      method: 'POST',
+      body: JSON.stringify({ harnessId }),
+    });
+    await refreshMcpModal();
+    showToast(data.restartHint || 'Connected — restart your AI app.', 6000);
+  } catch (e) {
+    err.hidden = false; err.textContent = e.message;
+  }
+}
+
+async function testMcpConnection() {
+  const err = document.getElementById('mcp-err');
+  err.hidden = true; err.textContent = '';
+  try {
+    const res = await fetch(API + '/api/mcp/test', { method: 'POST' });
+    const data = await res.json();
+    if (!data.ok) throw new Error(data.error || 'Connection test failed');
+    showToast(`MCP ready · ${data.counts?.pending ?? '?'} pending stories · ${data.appVersion}`, 5000);
+  } catch (e) {
+    err.hidden = false; err.textContent = e.message;
+  }
+}
+
+async function copyMcpManual() {
+  const ta = document.getElementById('mcp-manual-json');
+  if (!ta?.value) return;
+  try {
+    await navigator.clipboard.writeText(ta.value);
+    showToast('MCP config copied to clipboard', 2500);
+  } catch {
+    ta.select();
+    document.execCommand('copy');
+    showToast('MCP config copied', 2500);
+  }
+}
+
+// ── view (board / dashboard) ────────────────────────────────────────────────
+const VIEW_KEY = 'storydeck-view';
+function setView(name) {
+  const view = name === 'dash' ? 'dash' : 'board';
+  if (document.documentElement) document.documentElement.dataset.view = view;
+  try { localStorage.setItem(VIEW_KEY, view); } catch (e) {}
+  document.querySelectorAll('#view-seg .seg-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.view === view ? 'true' : 'false'));
+}
+function initView() {
+  let stored = 'board';
+  try { stored = localStorage.getItem(VIEW_KEY) || 'board'; } catch (e) {}
+  setView(stored);
+}
+
+// ── dashboard ────────────────────────────────────────────────────────────────
+function dashMeter(n, total, width) {
+  const filled = total ? Math.round((n / total) * width) : 0;
+  return `${'█'.repeat(filled)}<span class="empty">${'░'.repeat(Math.max(0, width - filled))}</span>`;
+}
+function renderDash(rows) {
+  const mount = document.getElementById('dash-view');
+  if (!mount) return;
+  const by = k => rows.filter(t => getSprintState(t) === k);
+  const sum = arr => arr.reduce((a, t) => a + formatPoints(t.points), 0);
+  const todo = by('todo'), wip = by('in-progress'), blk = by('blocked'), done = by('done');
+  const open = rows.filter(t => t.status !== 'done');
+  const urgent = open.filter(t => t.urgent);
+
+  const tiles = [
+    ['t-todo', todo.length, 'To Do'], ['t-wip', wip.length, 'In Progress'],
+    ['t-blocked', blk.length, 'Blocked'], ['t-done', done.length, 'Done'],
+    ['t-urgent', urgent.length, 'Urgent'], ['t-pts', sum(open), 'Open pts'],
+  ].map(t => `<div class="tile ${t[0]}"><span class="num">${t[1]}</span><span class="lbl">${t[2]}</span></div>`).join('');
+
+  const donePct = rows.length ? Math.round((done.length / rows.length) * 100) : 0;
+  const statusRows = SPRINT_COLUMNS.map(c => {
+    const items = by(c.key);
+    return `<div class="bar-row"><span class="bar-lbl">${escHTML(c.label)}</span><span class="bar-track">${dashMeter(items.length, rows.length, 22)}</span><span class="bar-val">${items.length} · ${sum(items)}p</span></div>`;
+  }).join('');
+
+  const epicMap = rows.reduce((m, t) => {
+    const e = normalizeEpic(t.project);
+    (m[e] = m[e] || { n: 0, p: 0 }); m[e].n++; m[e].p += formatPoints(t.points); return m;
+  }, {});
+  const epicRows = Object.entries(epicMap).sort((a, b) => b[1].n - a[1].n);
+  const maxN = Math.max(1, ...epicRows.map(e => e[1].n));
+  const epicHTML = epicRows.length
+    ? epicRows.map(([e, v]) => `<div class="bar-row"><span class="bar-lbl">${escHTML(e)}</span><span class="bar-track">${dashMeter(v.n, maxN, 22)}</span><span class="bar-val">${v.n} · ${v.p}p</span></div>`).join('')
+    : `<div class="urgent-line" style="color:var(--faint-text)">no stories</div>`;
+
+  const urgentHTML = urgent.length
+    ? urgent.map(t => `<div class="urgent-line"><span class="id">#${t.id}</span> ${escHTML(t.task)} <span style="color:var(--faint-text)">[${escHTML(normalizeEpic(t.project))}]</span></div>`).join('')
+    : `<div class="urgent-line" style="color:var(--faint-text)">no open urgent stories</div>`;
+
+  // Deadlines: open stories with a due date, soonest first. Overdue floats to
+  // the top (dates sort ascending), each row tagged with the same urgency chip.
+  const dated = open.filter(t => t.due).sort((a, b) => (a.due < b.due ? -1 : a.due > b.due ? 1 : 0));
+  const overdueCount = dated.filter(t => (dueInfo(t) || {}).cls === 'due-over').length;
+  const deadlineHTML = dated.length
+    ? dated.slice(0, 8).map(t => {
+        const info = dueInfo(t) || { cls: 'due-ok', label: t.due };
+        return `<div class="urgent-line"><span class="id">#${t.id}</span> ${escHTML(t.task)} <span class="due-chip ${info.cls}">due ${info.label}</span></div>`;
+      }).join('')
+    : `<div class="urgent-line" style="color:var(--faint-text)">no scheduled deadlines</div>`;
+  const deadlineHead = `deadlines (${dated.length})` + (overdueCount ? ` · ${overdueCount} overdue` : '');
+
+  mount.innerHTML = `
+    <div class="tiles">${tiles}</div>
+    <div class="dash-cols">
+      <section class="panel-card"><div class="panel-head">by status · ${donePct}% done</div><div class="panel-body">${statusRows}</div></section>
+      <section class="panel-card"><div class="panel-head">urgent queue (${urgent.length})</div><div class="panel-body">${urgentHTML}</div></section>
+    </div>
+    <section class="panel-card"><div class="panel-head">${deadlineHead}</div><div class="panel-body">${deadlineHTML}</div></section>
+    <section class="panel-card"><div class="panel-head">by epic (${epicRows.length})</div><div class="panel-body">${epicHTML}</div></section>`;
+}
+
+// ── boot screen: ANSI banner + live weekly standup ──────────────────────────
+function weekRangeLabel() {
+  const now = new Date();
+  const dow = (now.getDay() + 6) % 7; // Monday = 0
+  const mon = new Date(now); mon.setDate(now.getDate() - dow);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6);
+  const f = d => d.toLocaleDateString('en-US', { month: 'short', day: '2-digit' });
+  return `${f(mon)} - ${f(sun)}`;
+}
+function bootLines() {
+  const st = t => getSprintState(t);
+  const open = tasks.filter(t => t.status !== 'done');
+  const wip = tasks.filter(t => st(t) === 'in-progress');
+  const urgent = open.filter(t => t.urgent);
+  const done = tasks.filter(t => t.status === 'done');
+  const todo = tasks.filter(t => st(t) === 'todo');
+  const load = open.reduce((a, t) => a + formatPoints(t.points), 0);
+  const trim = s => s.length > 46 ? s.slice(0, 44) + '..' : s;
+  return [
+    'STORYDECK BIOS v2.6.07    (c) 2026 ' + boardUser + ' systems',
+    "CPU: sprint-core @ 4.2GHz      Memory: 65536K <span class='ok'>OK</span>",
+    "Detecting storage .............. /stories <span class='ok'>[" + tasks.length + ' objects]</span>',
+    "Mounting board volume .......... <span class='ok'>OK</span>",
+    "Loading kanban kernel .......... <span class='ok'>OK</span>",
+    "Scanning urgent flags .......... <span class='hot'>" + urgent.length + ' found</span>',
+    'board@localhost login: ' + boardUser,
+    "Authenticating ................. <span class='ok'>OK</span>",
+    '',
+    "<span class='head'>=== WEEKLY STANDUP // week of " + weekRangeLabel() + ' ===</span>',
+    'IN PROGRESS (' + wip.length + '): ' + (wip.slice(0, 4).map(t => '#' + t.id + ' ' + escHTML(trim(t.task))).join('  |  ') || '—'),
+    'URGENT (' + urgent.length + '): ' + (urgent.map(t => '#' + t.id).join(', ') || '—'),
+    "DONE total: <span class='ok'>" + done.length + '</span>    TODO backlog: ' + todo.length + "    LOAD: <span class='hot'>" + load + ' pts</span>',
+    '',
+    '$ storydeck --launch',
+  ];
+}
+let bootTimer = null;
+function runBoot() {
+  const boot = document.getElementById('boot');
+  const out = document.getElementById('boot-out');
+  const launch = document.getElementById('boot-launch');
+  const caret = boot.querySelector('.boot-caret');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const LINES = bootLines();
+  clearInterval(bootTimer);
+  out.innerHTML = '';
+  launch.hidden = true;
+  if (caret) caret.style.display = '';
+  boot.style.display = 'flex'; boot.style.opacity = '1';
+
+  let finished = false;
+  const finish = () => {
+    if (finished) return; finished = true;
+    clearInterval(bootTimer);
+    boot.style.opacity = '0';
+    setTimeout(() => { boot.style.display = 'none'; }, 350);
+    document.removeEventListener('keydown', onKey);
+  };
+  const reveal = () => {
+    if (caret) caret.style.display = 'none';
+    launch.hidden = false;
+    launch.focus();
+  };
+  // A keypress only fast-forwards the typing — it never leaves the boot screen.
+  const onKey = (e) => {
+    if (finished || !launch.hidden) return;
+    e.preventDefault();
+    clearInterval(bootTimer);
+    out.innerHTML = LINES.map(l => `<div>${l}</div>`).join('');
+    reveal();
+  };
+
+  launch.onclick = finish;               // the ONLY way out is the button (or Enter on the focused button)
+  document.addEventListener('keydown', onKey);
+
+  if (reduce) {
+    out.innerHTML = LINES.map(l => `<div>${l}</div>`).join('');
+    reveal();
+    return;
+  }
+  let i = 0;
+  bootTimer = setInterval(() => {
+    if (i >= LINES.length) { clearInterval(bootTimer); reveal(); return; }
+    out.insertAdjacentHTML('beforeend', `<div>${LINES[i]}</div>`); i++;
+  }, 120);
+}
+
+// ── density ────────────────────────────────────────────────────────────────
+function setDensity(mode) {
+  density = mode === 'compact' ? 'compact' : 'comfortable';
+  try { localStorage.setItem(DENSITY_KEY, density); } catch (e) {}
+  document.querySelectorAll('#density-seg .seg-btn').forEach(b => b.setAttribute('aria-pressed', b.dataset.density === density ? 'true' : 'false'));
+  render();
+}
+function initDensity() {
+  let stored = 'comfortable';
+  try { stored = localStorage.getItem(DENSITY_KEY) || 'comfortable'; } catch (e) {}
+  setDensity(stored);
+}
+
+// ── modal ────────────────────────────────────────────────────────────────
+function defaultEpicForNewStory() {
+  if (activeFilter === 'All' || activeFilter === 'Urgent') return UNASSIGNED_EPIC;
+  return activeFilter;
+}
+function renderModalEpic(selected) {
+  modalEpicValue = normalizeEpic(selected);
+  const mount = document.getElementById('modal-epic-mount');
+  const epics = getEpics();
+  const isCustom = !epics.includes(modalEpicValue);
+  mount.innerHTML = csSelectHTML({
+    id: 'modal-epic',
+    value: isCustom ? '__custom__' : modalEpicValue,
+    options: epicSelectOptions(isCustom ? UNASSIGNED_EPIC : modalEpicValue),
+    block: true,
+  });
+  const custom = document.getElementById('new-task-project-custom');
+  custom.value = isCustom ? modalEpicValue : '';
+  custom.style.display = isCustom ? 'block' : 'none';
+  if (isCustom) modalEpicValue = '__custom__';
+}
+function onModalEpicChange(value) {
+  const custom = document.getElementById('new-task-project-custom');
+  if (value === '__custom__') {
+    modalEpicValue = '__custom__';
+    // Re-render trigger label to show custom sentinel.
+    const el = document.querySelector('.cs-select[data-cs="modal-epic"]');
+    if (el) { el.dataset.value = '__custom__'; el.querySelector('.cs-value').textContent = '+ New Epic…'; el.querySelectorAll('.cs-option').forEach(o => o.setAttribute('aria-selected', o.dataset.value === '__custom__')); }
+    custom.style.display = 'block';
+    custom.focus();
+  } else {
+    modalEpicValue = value;
+    const el = document.querySelector('.cs-select[data-cs="modal-epic"]');
+    if (el) { el.dataset.value = value; el.querySelector('.cs-value').textContent = value; el.querySelectorAll('.cs-option').forEach(o => o.setAttribute('aria-selected', o.dataset.value === value)); }
+    custom.style.display = 'none';
+  }
+}
+function getModalEpic() {
+  const custom = document.getElementById('new-task-project-custom');
+  if (modalEpicValue === '__custom__') { const v = normalizeEpic(custom.value); return v === UNASSIGNED_EPIC ? '' : v; }
+  if (modalEpicValue === UNASSIGNED_EPIC) return '';
+  return normalizeEpic(modalEpicValue) === UNASSIGNED_EPIC ? '' : normalizeEpic(modalEpicValue);
+}
+
+let modalState = 'todo';
+let modalUrgent = false;
+
+function setModalState(state) {
+  modalState = state;
+  document.querySelectorAll('#modal-status .seg-btn').forEach(b => {
+    b.classList.toggle('active', b.dataset.state === state);
+  });
+}
+function toggleModalUrgent(force) {
+  modalUrgent = typeof force === 'boolean' ? force : !modalUrgent;
+  const btn = document.getElementById('modal-urgent-btn');
+  btn.classList.toggle('active', modalUrgent);
+  btn.setAttribute('aria-pressed', String(modalUrgent));
+  btn.textContent = modalUrgent ? '!! Urgent — ON (click to clear)' : '!! Mark as urgent';
+}
+
+function openModal(state = 'todo') {
+  editingStoryId = null;
+  creatingStoryState = state;
+  document.getElementById('modal-title').textContent = `Add story to ${sprintStateLabel(state)}`;
+  document.getElementById('modal-save-btn').textContent = 'Add story';
+  document.getElementById('new-task-text').value = '';
+  renderModalEpic(defaultEpicForNewStory());
+  document.getElementById('new-task-points').value = DEFAULT_SPRINT_POINTS;
+  document.getElementById('new-task-due').value = '';
+  document.getElementById('new-task-note').value = '';
+  setModalState(state);
+  toggleModalUrgent(false);
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('new-task-text').focus();
+}
+function openEditStory(id) {
+  const t = tasks.find(x => x.id === id);
+  if (!t) return;
+  editingStoryId = id;
+  document.getElementById('modal-title').textContent = `Edit story #${id}`;
+  document.getElementById('modal-save-btn').textContent = 'Save changes';
+  document.getElementById('new-task-text').value = t.task || '';
+  renderModalEpic(t.project);
+  document.getElementById('new-task-points').value = formatPoints(t.points);
+  document.getElementById('new-task-due').value = t.due || '';
+  document.getElementById('new-task-note').value = t.note || '';
+  setModalState(getSprintState(t));
+  toggleModalUrgent(!!t.urgent);
+  document.getElementById('modal').classList.add('open');
+  document.getElementById('new-task-text').focus();
+}
+function closeModal() {
+  document.getElementById('modal').classList.remove('open');
+  editingStoryId = null;
+  creatingStoryState = 'todo';
+  closeAllSelects();
+}
+
+function saveNewTask() {
+  const text = document.getElementById('new-task-text').value.trim();
+  if (!text) return;
+  const points = formatPoints(document.getElementById('new-task-points').value);
+  const values = {
+    task: text,
+    project: getModalEpic(),
+    points,
+    urgent: modalUrgent,
+    note: document.getElementById('new-task-note').value.trim(),
+    due: document.getElementById('new-task-due').value,
+    ...statePatch(modalState),
+  };
+
+  if (editingStoryId !== null) {
+    const id = editingStoryId;
+    guard(async () => {
+      const data = await api(`/api/stories/${id}`, { method: 'PATCH', body: JSON.stringify(values) });
+      replaceLocal(data.story); closeModal(); render();
+    });
+    return;
+  }
+  guard(async () => {
+    const data = await api('/api/stories', { method: 'POST', body: JSON.stringify(values) });
+    tasks.push(data.story); closeModal(); render();
+  });
+}
+
+// ── backup / restore (via API) ───────────────────────────────────────────
+async function exportJSON() {
+  try {
+    const payload = await api('/api/export');
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${boardSlug()}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) { showConnError(`Backup failed: ${err.message}`); }
+}
+function openImportPicker() { document.getElementById('import-json-input').click(); }
+
+// Keyboard-shortcut help overlay (toggled with "?"). Uses the shared modal
+// focus-trap; Esc closes it via the global handler.
+function openShortcutsHelp() { document.getElementById('help-modal')?.classList.add('open'); }
+function closeShortcutsHelp() { document.getElementById('help-modal')?.classList.remove('open'); }
+function toggleShortcutsHelp() {
+  const el = document.getElementById('help-modal');
+  if (!el) return;
+  el.classList.contains('open') ? closeShortcutsHelp() : openShortcutsHelp();
+}
+
+// Guarded "start fresh": clears the board to empty. Destructive, so we require an
+// explicit confirm; the server writes a timestamped backup first, so it's always
+// recoverable via Restore.
+async function startFresh() {
+  const n = Array.isArray(tasks) ? tasks.length : 0;
+  const msg = n
+    ? `Clear all ${n} stories and start an empty board?\n\nA backup is saved automatically first, so you can Restore it later.`
+    : 'Start with an empty board?';
+  if (!window.confirm(msg)) return;
+  try {
+    const res = await fetch(API + '/api/reset', { method: 'POST' });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Could not reset the board.');
+    tasks = data.stories || [];
+    render();
+  } catch (e) {
+    showConnError(e.message || 'Could not reset the board.');
+  }
+}
+function importJSON(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    guard(async () => {
+      const payload = JSON.parse(reader.result);
+      const stories = Array.isArray(payload) ? payload : payload?.stories;
+      if (!Array.isArray(stories)) throw new Error('Expected a stories array');
+      if (!window.confirm(`Restore ${stories.length} stories from this backup? This replaces the current board (an automatic backup is saved first).`)) return;
+      const data = await api('/api/import', { method: 'POST', body: JSON.stringify({ stories }) });
+      tasks = data.stories;
+      activeFilter = 'All';
+      render();
+    });
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+
+// ── helpers ────────────────────────────────────────────────────────────────
+function escHTML(s) {
+  if (s === 0) return '0';
+  if (!s) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+function escAttr(s) { return escHTML(s); }
+
+// Render user text safely AND turn http(s) URLs into clickable links. Everything
+// is HTML-escaped first (XSS-safe); only http/https URLs become anchors. Links
+// open externally (target=_blank → Electron's setWindowOpenHandler → browser).
+// stopPropagation keeps a link click from also triggering the note's edit handler.
+function linkify(s) {
+  if (!s) return '';
+  const str = String(s);
+  const urlRe = /(https?:\/\/[^\s<]+)/g;
+  let out = '';
+  let last = 0;
+  let m;
+  while ((m = urlRe.exec(str)) !== null) {
+    out += escHTML(str.slice(last, m.index));
+    let url = m[0];
+    let trail = '';
+    const tm = url.match(/[.,;:!?)\]}'"]+$/);
+    if (tm) { trail = tm[0]; url = url.slice(0, -trail.length); }
+    const href = url.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+    out += `<a href="${href}" target="_blank" rel="noopener noreferrer" onclick="event.stopPropagation()">${escHTML(url)}</a>`;
+    out += escHTML(trail);
+    last = m.index + m[0].length;
+  }
+  out += escHTML(str.slice(last));
+  return out;
+}
+
+// ── search wiring ────────────────────────────────────────────────────────
+function initSearch() {
+  const input = document.getElementById('story-search');
+  const wrap = document.getElementById('search-wrap');
+  const clear = document.getElementById('search-clear');
+  let debounce;
+  input.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => applySearch(input.value), 110);
+  });
+  input.addEventListener('focus', () => { wrap.dataset.focused = 'true'; });
+  input.addEventListener('blur', () => { wrap.dataset.focused = 'false'; });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (input.value) { input.value = ''; applySearch(''); } else { input.blur(); }
+    }
+  });
+  clear.addEventListener('click', () => { input.value = ''; applySearch(''); input.focus(); });
+}
+
+// ── AI assistant ────────────────────────────────────────────────────────────
+let aiBusy = false;
+let aiHistory = []; // short-term memory: [{ role:'user'|'assistant', text }]
+
+function aiAppend(kind, text) {
+  const log = document.getElementById('ai-log');
+  const chat = document.getElementById('ai-chat');
+  chat.hidden = false;
+  const line = document.createElement('div');
+  line.className = 'ai-line ' + kind;
+  line.textContent = text;
+  log.appendChild(line);
+  log.scrollTop = log.scrollHeight;
+  return line;
+}
+
+function aiCloseChat() {
+  document.getElementById('ai-chat').hidden = true;
+}
+
+// Wipe the transcript + short-term memory so the window doesn't grow forever.
+function aiClearChat() {
+  const log = document.getElementById('ai-log');
+  if (log) log.innerHTML = '';
+  aiHistory = [];
+  document.getElementById('ai-chat').hidden = true;
+}
+
+const AI_ACTION_MARK = { add_story: '+ ', update_story: '~ ', complete_story: '✓ ', add_comment: '# ' };
+
+// Apply an AI focus_board action to the current view (no data change).
+function applyAIFocus(focus) {
+  if (!focus) return;
+  if (focus.epic) {
+    activeFilter = focus.epic === 'All' ? 'All'
+      : /^urgent$/i.test(focus.epic) ? 'Urgent'
+      : normalizeEpic(focus.epic);
+  }
+  if (focus.status) statusFilter = focus.status;
+  if (typeof focus.query === 'string') {
+    const input = document.getElementById('story-search');
+    if (input) input.value = focus.query;
+    applySearch(focus.query); // sets searchQuery + renders
+    return;
+  }
+  render();
+}
+function describeFocus(f) {
+  const bits = [];
+  if (f?.epic) bits.push(f.epic);
+  if (f?.status && f.status !== 'all') bits.push(STATE_TAG[f.status] || f.status);
+  if (f?.query) bits.push(`"${f.query}"`);
+  return bits.length ? ' → ' + bits.join(' · ') : '';
+}
+
+// Render one executed action as a chat line (or several for read results).
+function aiRenderAction(a) {
+  if (!a.ok) { aiAppend('err', `${a.tool || 'action'}: ${a.error || 'failed'}`); return; }
+  if (a.tool === 'focus_board') {
+    applyAIFocus(a.focus);
+    aiAppend('act', 'focused board' + describeFocus(a.focus));
+    return;
+  }
+  if (a.tool === 'get_board_summary') {
+    aiAppend('act', `board: ${a.total} stories · todo ${a.todo} · wip ${a.in_progress} · blkd ${a.blocked} · done ${a.done} · ${a.open_points} open pts`);
+    (a.urgent || []).forEach(line => aiAppend('act', '  !! ' + line));
+    return;
+  }
+  if (a.tool === 'search_stories') {
+    aiAppend('act', `${a.count} match${a.count === 1 ? '' : 'es'}`);
+    (a.results || []).forEach(line => aiAppend('act', '  ' + line));
+    return;
+  }
+  const label = a.summary || (a.id != null ? `#${a.id}` : (a.tool || 'done'));
+  aiAppend('act', (AI_ACTION_MARK[a.tool] || '· ') + label);
+}
+
+async function aiSend() {
+  const input = document.getElementById('ai-input');
+  const send = document.getElementById('ai-send');
+  const msg = (input.value || '').trim();
+  if (!msg || aiBusy) return;
+  input.value = '';
+  aiAppend('user', msg);
+  const pending = aiAppend('ai pending', '…thinking');
+  aiBusy = true; send.disabled = true;
+  try {
+    const data = await api('/api/chat', {
+      method: 'POST',
+      body: JSON.stringify({ message: msg, history: aiHistory.slice(-8) }),
+    });
+    pending.className = 'ai-line ai';
+    pending.textContent = data.reply || 'done.';
+    // Remember this turn (short-term memory) so follow-ups like "take me there" resolve.
+    aiHistory.push({ role: 'user', text: msg }, { role: 'assistant', text: data.reply || '' });
+    if (aiHistory.length > 20) aiHistory = aiHistory.slice(-20);
+    // Refresh board data first so focus_board renders against the latest stories.
+    if (Array.isArray(data.stories)) tasks = data.stories;
+    (data.actions || []).forEach(aiRenderAction);
+    if (Array.isArray(data.stories) && !(data.actions || []).some(a => a.ok && a.tool === 'focus_board')) render();
+  } catch (err) {
+    pending.className = 'ai-line err';
+    pending.textContent = err.message;
+  } finally {
+    aiBusy = false; send.disabled = false; input.focus();
+  }
+}
+
+function initAI() {
+  const input = document.getElementById('ai-input');
+  if (!input) return;
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); aiSend(); }
+    else if (e.key === 'Escape') {
+      e.stopPropagation();
+      if (input.value) input.value = '';
+      else if (!document.getElementById('ai-chat').hidden) aiCloseChat();
+      else input.blur();
+    }
+  });
+}
+
+// ── global keyboard shortcuts ──────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (document.getElementById('boot')?.style.display === 'flex') return;
+  const inField = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName) || document.activeElement?.isContentEditable;
+  if (e.key === '/' && !inField && !openSelect) {
+    e.preventDefault();
+    document.getElementById('story-search').focus();
+    return;
+  }
+  if (e.key === 'Escape') { closeStatusMenu(); closeModal(); closeAiKeyModal(); closeMcpModal(); closeShortcutsHelp(); cancelNote(); }
+  if (e.key === 'n' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); openModal(); }
+  if (e.key === '?' && !inField && !openSelect) { e.preventDefault(); toggleShortcutsHelp(); }
+  if (!inField && !openSelect) {
+    if (e.key === 'v') { e.preventDefault(); setView((document.documentElement.dataset.view === 'dash') ? 'board' : 'dash'); }
+    if (e.key === 'b') { e.preventDefault(); runBoot(); }
+    if (e.key === 'a') { e.preventDefault(); document.getElementById('ai-input')?.focus(); }
+    if (e.key === 'n' && !e.metaKey && !e.ctrlKey) { e.preventDefault(); openModal(); }
+  }
+  if (e.key === 'Enter' && document.getElementById('modal').classList.contains('open') && !e.shiftKey) {
+    if (document.activeElement?.id === 'new-task-text') saveNewTask();
+  }
+});
+
+// ── A11y: dialog focus management (trap + restore) ───────────────────────────
+// Additive and guarded — no changes to the many open/close call sites. Observes
+// the `.open` class on `.modal-overlay` dialogs to move focus in on open, trap
+// Tab within the dialog, and restore focus to the trigger on close. Skips safely
+// where MutationObserver is unavailable (e.g. the test sandbox).
+(function setupModalA11y() {
+  if (typeof document === 'undefined' || typeof document.querySelectorAll !== 'function') return;
+  const overlays = () => Array.from(document.querySelectorAll('.modal-overlay'));
+  function focusables(modal) {
+    return Array.from(modal.querySelectorAll(
+      'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )).filter((el) => el.offsetParent !== null && (!el.closest || !el.closest('[hidden]')));
+  }
+  let restoreTo = null;
+  function onOpen(overlay) {
+    restoreTo = document.activeElement;
+    const modal = overlay.querySelector('.modal');
+    if (modal && !modal.contains(document.activeElement)) {
+      const f = focusables(modal);
+      if (f[0]) f[0].focus();
+    }
+  }
+  function onClose() {
+    if (restoreTo && typeof restoreTo.focus === 'function') { try { restoreTo.focus(); } catch (e) {} }
+    restoreTo = null;
+  }
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Tab') return;
+    const open = overlays().find((o) => o.classList.contains('open'));
+    if (!open) return;
+    const modal = open.querySelector('.modal');
+    const f = modal ? focusables(modal) : [];
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1], active = document.activeElement;
+    if (!modal.contains(active)) { e.preventDefault(); first.focus(); }
+    else if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+  });
+  if (typeof MutationObserver === 'undefined') return;
+  const obs = new MutationObserver((muts) => {
+    for (const m of muts) {
+      const el = m.target;
+      const isOpen = el.classList && el.classList.contains('open');
+      const wasOpen = m.oldValue ? m.oldValue.split(/\s+/).includes('open') : false;
+      if (isOpen && !wasOpen) onOpen(el);
+      else if (!isOpen && wasOpen) onClose();
+    }
+  });
+  overlays().forEach((o) => obs.observe(o, { attributes: true, attributeFilter: ['class'], attributeOldValue: true }));
+})();
+
+// ── init ───────────────────────────────────────────────────────────────────
+// Boot is a one-time welcome: auto-run only until it's been seen once, then
+// only on the explicit "boot" button (runBoot). Survives refreshes.
+const BOOT_KEY = 'storydeck-boot-seen';
+let bootShown = restore(BOOT_KEY, '') === '1';
+initTheme();
+initView();
+initDensity();
+initSearch();
+initAI();
+refreshAiStatusBadge();
+loadState();
+initVersion();
+</script>
+</body>
+</html>
